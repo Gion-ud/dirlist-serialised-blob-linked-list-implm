@@ -1,3 +1,6 @@
 {
-    "C_Cpp.default.compilerPath": "C:/John_Wood/DevTools/w64devkit/bin/g++.exe"
+    "C_Cpp.default.compilerPath": "C:/John_Wood/DevTools/w64devkit/bin/g++.exe",
+    "clangd.arguments": [
+        "--header-insertion=never"
+    ]
 }

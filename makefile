@@ -1,6 +1,7 @@
 all: keylist.o tskl
 
-CFLAGS = -O0 -Wall -Wextra -fno-exceptions -fno-strict-aliasing -D_DEBUG -g
+CFLAGS = -O2 -Wall -Wextra -fno-exceptions \
+	-fno-strict-aliasing -std=c11 -D_DEBUG -g
 
 keylist.o: src/keylist.c | build
 	cc -c $< -o build/$@ $(CFLAGS) -Iinclude -D_NO_DBG_PRINT
@@ -14,3 +15,5 @@ tsvec: tests/tsvec.cxx src/vector.c | build
 
 tspool: tests/tspool.c src/vector.c src/pool_alloc.c | build
 	cc $^ -o bin/$@ $(CFLAGS) -Iinclude
+
+kvsymdb: 

@@ -263,4 +263,3 @@ int32_t KeyListIterator_Tell(KeyListIterator *it_p) {
     if (!it_p || !it_p->kla_p) return -1;
     return (int32_t)it_p->pos;
 }
-

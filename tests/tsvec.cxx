@@ -31,7 +31,7 @@ const char *ktbl[] {
 uint_t ktbl_len = sizeof(ktbl) / sizeof(*ktbl);
 
 int main() {
-    cxxds::static_vector<const char*, 32> v;
+    cxxds::static_vector<const char*, 32> v{};
     for (auto i = 0u; i < ktbl_len; ++i) {
         v.push_back(ktbl[i]);
     }
@@ -45,6 +45,11 @@ int main() {
         std::cout << "[" << it - v.begin() << "] " << v.deref(it) << '\n';
     }
     puts("");
+    auto it = (v.*&cxxds::static_vector<const char*, 32>::begin)();
+    std::cout << "[" << it - v.begin() << "] " << v.deref(it) << '\n';
+
+
+
 
     return 0;
 }

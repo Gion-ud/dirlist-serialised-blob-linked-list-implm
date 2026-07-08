@@ -1,0 +1,42 @@
+[
+ {
+  "directory": "C:\\John_Wood\\Coding_Projects\\c\\dirlist",
+  "arguments": [
+   "cc",
+   "-c",
+   "src/keylist.c",
+   "-o",
+   "build/keylist.o",
+   "-O0",
+   "-Wall",
+   "-Wextra",
+   "-fno-exceptions",
+   "-fno-strict-aliasing",
+   "-D_DEBUG",
+   "-g",
+   "-Iinclude",
+   "-D_NO_DBG_PRINT"
+  ],
+  "file": "src/keylist.c"
+ },
+ {
+  "directory": "C:\\John_Wood\\Coding_Projects\\c\\dirlist",
+  "arguments": [
+   "cc",
+   "build/keylist.o",
+   "tests/tskl.c",
+   "src/vector.c",
+   "-o",
+   "bin/tskl",
+   "-O0",
+   "-Wall",
+   "-Wextra",
+   "-fno-exceptions",
+   "-fno-strict-aliasing",
+   "-D_DEBUG",
+   "-g",
+   "-Iinclude"
+  ],
+  "file": "src/vector.c"
+ }
+]
