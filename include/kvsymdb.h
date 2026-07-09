@@ -41,15 +41,15 @@ typedef struct _kvsymdb_entview {
 } kvsymdb_entview_t;
 
 typedef struct _kvsymdb_bufview {
-    size_t  size;
-    void   *data;
+    size_t          size;
+    const void     *data;
 } kvsymdb_bufview_t;
 
 typedef struct _kvsymdb_iterator {
     kvsymdb_entry_t    *_ent_p;
 } kvsymdb_iterator_t;
 
-typedef struct _c_kvsymdb_reader kvsymdb_reader_t;
+// typedef struct _c_kvsymdb_reader kvsymdb_reader_t;
 
 extern kvsymdb_t *create_kvsymdb(uint32_t entc, uint32_t bufsize, int *out_errno_p);
 extern void destroy_kvsymdb(kvsymdb_t *symdb_p);
@@ -99,6 +99,13 @@ extern uint32_t _kvsymdb_read_buf(
     uint32_t    buf_size,
     int        *out_errno_p
 );
+extern int kvsymdb_get_entview(
+    const kvsymdb_t        *symdb_p,
+    const kvsymdb_entry_t  *ent_p,
+    kvsymdb_entview_t      *out_entview_p,
+    int                    *out_errno_p
+);
+
 extern kvsymdb_iterator_t kvsymdb_iterator_begin(kvsymdb_t *symdb_p);
 extern kvsymdb_iterator_t kvsymdb_iterator_end(kvsymdb_t *symdb_p);
 extern kvsymdb_iterator_t kvsymdb_iterator_next(
@@ -119,106 +126,6 @@ enum kvsymdb_return_code {
 
 
 #ifdef __cplusplus
-namespace cxx_kvsymdb {
-    static constexpr uint32_t ALIGN_SIZE    = 4u;
-    static constexpr uint32_t INIT_BUFSIZE  = 32u;
-    static constexpr uint32_t INIT_ENTC     = 1u;
-
-    struct kvsymdb {
-    private:
-        kvsymdb_t  *_symdb_p;
-        int         _errno;
-    public:
-        inline kvsymdb(uint32_t entc) noexcept
-            : _symdb_p(nullptr), _errno(0)
-        {
-            this->_symdb_p = create_kvsymdb(entc, INIT_BUFSIZE, &this->_errno);
-        }
-        inline ~kvsymdb() noexcept {
-            if (!this->_symdb_p) return;
-            destroy_kvsymdb(this->_symdb_p);
-            this->_symdb_p = nullptr;
-        }
-
-        void clearerr() noexcept {
-            this->_errno = 0;
-        }
-        const char *errmsg() noexcept {
-            return kvsymdb_strerror(this->_errno);
-        }
-        bool is_init() noexcept {
-            return (!!this->_symdb_p);
-        }
-
-        int reserve(uint32_t entc) noexcept {
-            return kvsymdb_reserve(this->_symdb_p, entc, &this->_errno);
-        }
-        int reserve_buffer(uint32_t new_bufsize) noexcept {
-            return kvsymdb_reserve_arenabuf(
-                &this->_symdb_p, new_bufsize, &this->_errno
-            );
-        }
-        int get_self_view(kvsymdb_view_t *out_view_p) noexcept {
-            return kvsymdb_get_view(this->_symdb_p, out_view_p, &this->_errno);
-        }
-        int insert (
-            const kvsymdb_bufview_t    *key_p,
-            const kvsymdb_bufview_t    *val_p,
-            uint32_t                    key_hash,
-            uint16_t                    type
-        ) noexcept {
-            return kvsymdb_insert(
-                &this->_symdb_p,
-                key_p,
-                val_p,
-                key_hash,
-                type,
-                &this->_errno
-            );
-        }
-        int mark_dead(kvsymdb_entry_t *ent_p) noexcept {
-            return kvsymdb_mark_dead(
-                this->_symdb_p,
-                ent_p,
-                &this->_errno
-            );
-        }
-        bool is_valid_entry(const kvsymdb_entry_t *ent_p) noexcept {
-            return kvsymdb_is_valid_entry(this->_symdb_p, ent_p);
-        }
-        struct iterator {
-            kvsymdb_entry_t *_ent_p;
-            iterator(kvsymdb_entry_t *ent_p) noexcept {
-                this->_ent_p = ent_p;
-            }
-        };
-
-        iterator begin() noexcept {
-            return iterator(
-                kvsymdb_iterator_begin(this->_symdb_p)._ent_p
-            );
-        }
-        iterator end() noexcept {
-            return iterator(
-                kvsymdb_iterator_end(this->_symdb_p)._ent_p
-            );
-        }
-        iterator next(iterator &it) noexcept {
-            return iterator(
-                kvsymdb_iterator_next(
-                    this->_symdb_p,
-                    (kvsymdb_iterator_t) { it._ent_p }
-                )._ent_p
-            );
-        }
-        const kvsymdb_entry_t &deref(iterator &it) noexcept {
-            return *it._ent_p;
-        }
-
-        kvsymdb(const kvsymdb&) = delete;
-        kvsymdb& operator=(const kvsymdb&) = delete;
-    };
-}
-
+#include <_cxx_kvsymdb.hpp>
 #endif /* __cplusplus */
 

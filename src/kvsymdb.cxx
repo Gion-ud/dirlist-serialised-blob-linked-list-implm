@@ -74,12 +74,12 @@ namespace _kvsymdb_intrnl {
     namespace align {
         template<uint32_t align_size>
         inline uint32_t cstr_size_aligned(uint32_t len) {
-            return align_utils::align_off<uint32_t, cxx_kvsymdb::ALIGN_SIZE>(len + 1);
+            return align_utils::align_off<uint32_t, align_size>(len + 1);
         }
 
         template<uint32_t align_size>
         inline uint32_t blob_size_aligned(uint32_t size) {
-            return align_utils::align_off<uint32_t, cxx_kvsymdb::ALIGN_SIZE>(size);
+            return align_utils::align_off<uint32_t, align_size>(size);
         }
 
         template<uint32_t align_size>
@@ -158,7 +158,7 @@ static inline int _kvsymdb_intrnl::reserve_arenabuf(
     new_symdb_p->_entrycnt  = old_symdb_p->_entrycnt;
     new_symdb_p->_entrycap  = old_symdb_p->_entrycap;
     new_symdb_p->_buf_len   = old_symdb_p->_buf_len;
-    new_symdb_p->_buf_size  = old_symdb_p->_buf_size;
+    new_symdb_p->_buf_size  = new_bufsize;
     new_symdb_p->_state_arr = old_symdb_p->_state_arr; // ptr swap
 
     memcpy(
@@ -452,6 +452,10 @@ extern "C" int kvsymdb_insert(
     if (symdb_p->_buf_len + entsize >= symdb_p->_buf_size) {
         uint32_t new_bufsize = (entsize > symdb_p->_buf_size)
             ? entsize * 2 : symdb_p->_buf_size * 2;
+        dbg_print(
+            "symdb_p->_buf_size: %u; new_bufsize: %u",
+            symdb_p->_buf_size, new_bufsize
+        );
 
         int rc = _kvsymdb_intrnl::\
             reserve_arenabuf(&symdb_p, new_bufsize, out_errno_p);
@@ -462,6 +466,10 @@ extern "C" int kvsymdb_insert(
             );
 
         *symdb_pp = symdb_p;
+        dbg_print(
+            "symdb_p->_buf_size: %u; new_bufsize: %u",
+            symdb_p->_buf_size, new_bufsize
+        );
         assert(symdb_p->_buf_size == new_bufsize);
     }
 
@@ -535,6 +543,49 @@ extern "C" int kvsymdb_mark_dead(
 
     return KVSYMDB_SUCCESS;
 }
+
+
+extern "C" int kvsymdb_get_entview(
+    const kvsymdb_t        *symdb_p,
+    const kvsymdb_entry_t  *ent_p,
+    kvsymdb_entview_t      *out_entview_p,
+    int                    *out_errno_p
+) {
+    if (!out_errno_p) return KVSYMDB_FAILED;
+    *out_errno_p = _kvsymdb_intrnl::error_code::NOERROR;
+
+    if (!symdb_p || !ent_p || !out_entview_p)
+        RETURN_FAILED_STAT_WITH_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_NULLPTR
+        );
+
+    if (!_kvsymdb_intrnl::is_valid_entry(symdb_p, ent_p))
+        RETURN_FAILED_STAT_WITH_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_BADENT
+        );
+
+    _kvsymdb_intrnl::assert_intrnl_state(symdb_p);
+
+    out_entview_p->id       = ent_p->id;
+    out_entview_p->hash     = ent_p->hash;
+    out_entview_p->type     = ent_p->type;
+    out_entview_p->name     = reinterpret_cast<const char*>(ent_p->payload); 
+    out_entview_p->name_len = ent_p->name_len;
+    out_entview_p->data     = \
+        reinterpret_cast<const char*>(
+            ent_p->payload +
+            _kvsymdb_intrnl::align::\
+                cstr_size_aligned<cxx_kvsymdb::ALIGN_SIZE>(ent_p->name_len)
+        );
+
+    out_entview_p->data_len = ent_p->data_len;
+    out_entview_p->_record  = static_cast<const void*>(ent_p);
+
+    return KVSYMDB_SUCCESS;
+}
+
 
 extern "C" bool kvsymdb_is_valid_entry(
     const kvsymdb_t        *symdb_p,

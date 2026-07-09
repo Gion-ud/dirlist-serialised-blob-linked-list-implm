@@ -1,7 +1,12 @@
-all: keylist.o tskl
+#all: keylist.o tskl
+all: build/kvsymdb.o bin/tssym
 
-CFLAGS = -O2 -Wall -Wextra -fno-exceptions \
-	-fno-strict-aliasing -std=c11 -D_DEBUG -g
+_C_CXX_FLAGS = -O2 -Wall -Wextra -fno-exceptions \
+	-fno-strict-aliasing -D_DEBUG -g
+
+CFLAGS = $(_C_CXX_FLAGS) -std=c11
+
+CXXFLAGS = $(_C_CXX_FLAGS) -std=c++11 -fno-rtti
 
 keylist.o: src/keylist.c | build
 	cc -c $< -o build/$@ $(CFLAGS) -Iinclude -D_NO_DBG_PRINT
@@ -16,4 +21,10 @@ tsvec: tests/tsvec.cxx src/vector.c | build
 tspool: tests/tspool.c src/vector.c src/pool_alloc.c | build
 	cc $^ -o bin/$@ $(CFLAGS) -Iinclude
 
-kvsymdb: 
+
+build/kvsymdb.o: src/kvsymdb.cxx | build
+	cc -c $< -o $@ $(CXXFLAGS) -Iinclude
+
+bin/tssym: build/kvsymdb.o tests/tssym.cxx | bin
+	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Llib -lstdc++ -lgcc -lgcc_s
+	export PATH="$$PATH:$$(pwd)/bin"
