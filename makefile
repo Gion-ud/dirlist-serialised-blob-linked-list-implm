@@ -28,3 +28,6 @@ build/kvsymdb.o: src/kvsymdb.cxx | build
 bin/tssym: build/kvsymdb.o tests/tssym.cxx | bin
 	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Llib -lstdc++ -lgcc -lgcc_s
 	export PATH="$$PATH:$$(pwd)/bin"
+
+clean:
+	rm build/*

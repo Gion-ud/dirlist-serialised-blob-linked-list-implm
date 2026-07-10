@@ -59,7 +59,10 @@ namespace _kvsymdb_intrnl {
             ERR_EMPTY,
             ERR_BADIDX,
             ERR_BADOFF,
-            ERR_BADENT
+            ERR_BADENT, // 1
+            ERR_GC,
+            ERR_CREATE,
+            ERR_INSERT,
         };
     };
 
@@ -118,6 +121,11 @@ namespace _kvsymdb_intrnl {
     static inline uint32_t record_size(
         const kvsymdb_entry_t  *ent_p 
     );
+    static inline void get_entview(
+        const kvsymdb_t        *symdb_p,
+        const kvsymdb_entry_t  *ent_p,
+        kvsymdb_entview_t      *out_entview_p
+    );
 }
 
 extern "C" { // c abi structs; implmtation detail
@@ -129,12 +137,34 @@ extern "C" { // c abi structs; implmtation detail
         uint8_t    *_state_arr;     // [4]
         uint8_t     _arena_buf[];   // [5]
     };
-    struct _c_kvsymdb_reader {
-        kvsymdb_t          *_symdb_p;   // [0]
-        kvsymdb_entview_t  *_entview_p; // [1]
-        uint32_t            _pos;       // [2]
-    };
 }
+
+
+static inline void _kvsymdb_intrnl::get_entview(
+    const kvsymdb_t        *symdb_p,
+    const kvsymdb_entry_t  *ent_p,
+    kvsymdb_entview_t      *out_entview_p
+) {
+    assert(symdb_p);
+    assert(ent_p);
+    assert(out_entview_p);
+
+    out_entview_p->id       = ent_p->id;
+    out_entview_p->hash     = ent_p->hash;
+    out_entview_p->type     = ent_p->type;
+    out_entview_p->name     = reinterpret_cast<const char*>(ent_p->payload); 
+    out_entview_p->name_len = ent_p->name_len;
+    out_entview_p->data     = \
+        reinterpret_cast<const char*>(
+            ent_p->payload +
+            _kvsymdb_intrnl::align::\
+                cstr_size_aligned<cxx_kvsymdb::ALIGN_SIZE>(ent_p->name_len)
+        );
+
+    out_entview_p->data_len = ent_p->data_len;
+    out_entview_p->_record  = static_cast<const void*>(ent_p);
+}
+
 
 static inline int _kvsymdb_intrnl::reserve_arenabuf(
     kvsymdb_t **symdb_pp,
@@ -327,9 +357,9 @@ extern "C" void destroy_kvsymdb(kvsymdb_t *symdb_p) {
     operator delete(symdb_p);
 }
 
-extern "C" int kvsymdb_get_view(
+extern "C" int kvsymdb_get_intrnl_state_view(
     const kvsymdb_t    *symdb_p,
-    kvsymdb_view_t     *out_view_p,
+    kvsymdb_state_t    *out_view_p,
     int                *out_errno_p
 ) {
     if (!out_errno_p) return KVSYMDB_FAILED;
@@ -369,6 +399,9 @@ extern "C" int kvsymdb_reserve(
 
     _kvsymdb_intrnl::assert_intrnl_state(symdb_p);
 
+    // explicit check required for already enough cap
+    if (symdb_p->_entrycap >= new_entc) return KVSYMDB_SUCCESS;
+
     int rc = _kvsymdb_intrnl::reserve(symdb_p, out_errno_p, new_entc);
     if (rc < 0)
         RETURN_FAILED_STAT_WITH_ERRNO(
@@ -395,6 +428,8 @@ extern "C" int kvsymdb_reserve_arenabuf(
 
     _kvsymdb_intrnl::assert_intrnl_state(*symdb_pp);
 
+    // no need to resize if its already enough
+    if ((*symdb_pp)->_buf_size >= new_bufsize) return KVSYMDB_SUCCESS;
     int rc = _kvsymdb_intrnl::\
         reserve_arenabuf(symdb_pp, new_bufsize, out_errno_p);
 
@@ -403,6 +438,93 @@ extern "C" int kvsymdb_reserve_arenabuf(
             out_errno_p,
             _kvsymdb_intrnl::error_code::ERR_RESIZEBUF
         );
+
+    return KVSYMDB_SUCCESS;
+}
+
+extern "C" int kvsymdb_compact(
+    kvsymdb_t **symdb_pp,
+    int        *out_errno_p
+) {
+    using iterator      = kvsymdb_iterator_t;
+    using entry_view    = kvsymdb_entview_t;
+    using buffer_view   = kvsymdb_bufview_t;
+
+    *out_errno_p = _kvsymdb_intrnl::error_code::NOERROR;
+    if (!out_errno_p) return KVSYMDB_FAILED;
+
+    if (!symdb_pp || !*symdb_pp)
+        RETURN_FAILED_STAT_WITH_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_NULLPTR
+        );
+
+    _kvsymdb_intrnl::assert_intrnl_state(*symdb_pp);
+
+    kvsymdb_t *old_symdb_p  = *symdb_pp;
+    kvsymdb_t *new_symdb_p  =
+        create_kvsymdb(
+            old_symdb_p->_entrycap,
+            old_symdb_p->_buf_size,
+            out_errno_p
+        );
+     
+    if (!new_symdb_p)
+        RETURN_FAILED_STAT_WITH_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_CREATE
+        );
+
+    entry_view entview{};
+    buffer_view key{}, val{};
+
+    iterator it   = reinterpret_cast<iterator>(old_symdb_p->_arena_buf);
+    iterator end  = reinterpret_cast<iterator>(old_symdb_p->_arena_buf + old_symdb_p->_buf_len);
+    while (it != end) {
+        if (
+            old_symdb_p->_state_arr[it->id] == _kvsymdb_intrnl::state::ST_DEAD
+        ) {
+            it = reinterpret_cast<iterator>(
+                reinterpret_cast<uint8_t*>(it) + it->record_len
+            );
+            continue;
+        }
+        _kvsymdb_intrnl::get_entview(
+            old_symdb_p,
+            it,
+            &entview
+        );
+
+        key.data    = entview.name;
+        key.size    = entview.name_len;
+        val.data    = entview.data;
+        val.size    = entview.data_len;
+
+        int rc = kvsymdb_insert(
+            &new_symdb_p,
+            &key,
+            &val,
+            entview.hash,
+            entview.type,
+            out_errno_p
+        );
+        
+        if (rc) {
+            destroy_kvsymdb(new_symdb_p);
+            RETURN_FAILED_STAT_WITH_ERRNO(
+                out_errno_p,
+                _kvsymdb_intrnl::error_code::ERR_INSERT
+            );
+        }
+
+        it = reinterpret_cast<iterator>(
+            reinterpret_cast<uint8_t*>(it) + it->record_len
+        );
+    }
+
+    destroy_kvsymdb(old_symdb_p);
+
+    *symdb_pp = new_symdb_p;
 
     return KVSYMDB_SUCCESS;
 }
@@ -568,20 +690,7 @@ extern "C" int kvsymdb_get_entview(
 
     _kvsymdb_intrnl::assert_intrnl_state(symdb_p);
 
-    out_entview_p->id       = ent_p->id;
-    out_entview_p->hash     = ent_p->hash;
-    out_entview_p->type     = ent_p->type;
-    out_entview_p->name     = reinterpret_cast<const char*>(ent_p->payload); 
-    out_entview_p->name_len = ent_p->name_len;
-    out_entview_p->data     = \
-        reinterpret_cast<const char*>(
-            ent_p->payload +
-            _kvsymdb_intrnl::align::\
-                cstr_size_aligned<cxx_kvsymdb::ALIGN_SIZE>(ent_p->name_len)
-        );
-
-    out_entview_p->data_len = ent_p->data_len;
-    out_entview_p->_record  = static_cast<const void*>(ent_p);
+    _kvsymdb_intrnl::get_entview(symdb_p, ent_p, out_entview_p);
 
     return KVSYMDB_SUCCESS;
 }
@@ -644,26 +753,20 @@ extern "C"
 kvsymdb_iterator_t kvsymdb_iterator_begin(
     kvsymdb_t  *symdb_p
 ) {
-    kvsymdb_iterator_t iter = {0};
-    iter._ent_p =
-        (!symdb_p) ? nullptr : 
+    dbg_log_msg("");
+    return (!symdb_p) ? nullptr : 
         reinterpret_cast<kvsymdb_entry_t*>(symdb_p->_arena_buf);
-
-    return iter;
 }
 
 extern "C"
 kvsymdb_iterator_t kvsymdb_iterator_end(
     kvsymdb_t  *symdb_p
 ) {
-    kvsymdb_iterator_t iter = {0};
-    iter._ent_p =
-        (!symdb_p) ? nullptr :
+    dbg_log_msg("");
+    return (!symdb_p) ? nullptr :
         reinterpret_cast<kvsymdb_entry_t*>(
             symdb_p->_arena_buf + symdb_p->_buf_len
         );
-
-    return iter;
 }
 
 extern "C"
@@ -671,12 +774,18 @@ kvsymdb_iterator_t kvsymdb_iterator_next(
     kvsymdb_t          *symdb_p,
     kvsymdb_iterator_t  iter
 ) {
-    if (!symdb_p || !iter._ent_p) return { nullptr };
-    return {
-        reinterpret_cast<kvsymdb_entry_t*>(
-            reinterpret_cast<uint8_t*>(iter._ent_p) + iter._ent_p->record_len
-        )
-    };
+    dbg_log_msg("");
+    if (!symdb_p || !iter) return nullptr;
+    ptrdiff_t ent_off =
+        reinterpret_cast<uint8_t*>(iter) - symdb_p->_arena_buf;
+    return
+        (ent_off < static_cast<ptrdiff_t>(symdb_p->_buf_len))
+            ? reinterpret_cast<kvsymdb_entry_t*>(
+                reinterpret_cast<uint8_t*>(iter) + iter->record_len
+            )
+            : reinterpret_cast<kvsymdb_entry_t*>(
+                reinterpret_cast<uint8_t*>(symdb_p->_arena_buf) + symdb_p->_buf_len
+            );
 }
 
 extern "C"
@@ -710,8 +819,16 @@ const char *kvsymdb_strerror(int kvsymdb_errno) {
             return "invalid offset";
         case (ERR_BADENT):
             return "invalid entry";
+        case (ERR_GC):
+            return "compaction failure";
+        case (ERR_CREATE):
+            return "failed to create db";
+        case (ERR_INSERT):
+            return "failed to insert entry";
+
         default:
             break;
+
     }
 
     return "no error";

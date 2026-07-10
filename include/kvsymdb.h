@@ -8,6 +8,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 typedef struct _c_kvsymdb kvsymdb_t;
+typedef struct _c_kvsymdb_reader kvsymdb_reader_t;
 
 typedef struct _kvsymdb_view {
     uint32_t        ent_count;      // [0]
@@ -16,7 +17,7 @@ typedef struct _kvsymdb_view {
     uint32_t        buf_size;       // [3]
     const void     *_state_arr;     // [4]
     const uint8_t  *arena_buf;      // [5]
-} kvsymdb_view_t;
+} kvsymdb_state_t;
 
 typedef struct _kvsymdb_record_header {
     uint32_t    id;         // [0]; entry idx
@@ -45,17 +46,20 @@ typedef struct _kvsymdb_bufview {
     const void     *data;
 } kvsymdb_bufview_t;
 
-typedef struct _kvsymdb_iterator {
-    kvsymdb_entry_t    *_ent_p;
-} kvsymdb_iterator_t;
+typedef kvsymdb_entry_t *kvsymdb_iterator_t;
 
-// typedef struct _c_kvsymdb_reader kvsymdb_reader_t;
+
+struct _c_kvsymdb_reader {
+    kvsymdb_t          *_symdb_p;   // [0]
+    kvsymdb_entview_t  *_entview_p; // [1]
+    uint32_t            _pos;       // [2]
+};
 
 extern kvsymdb_t *create_kvsymdb(uint32_t entc, uint32_t bufsize, int *out_errno_p);
 extern void destroy_kvsymdb(kvsymdb_t *symdb_p);
-extern int kvsymdb_get_view(
+extern int kvsymdb_get_intrnl_state_view(
     const kvsymdb_t    *symdb_p,
-    kvsymdb_view_t     *out_view_p,
+    kvsymdb_state_t    *out_view_p,
     int                *out_errno_p
 );
 extern int kvsymdb_reserve(
@@ -104,6 +108,10 @@ extern int kvsymdb_get_entview(
     const kvsymdb_entry_t  *ent_p,
     kvsymdb_entview_t      *out_entview_p,
     int                    *out_errno_p
+);
+extern int kvsymdb_compact(
+    kvsymdb_t **symdb_pp,
+    int        *out_errno_p
 );
 
 extern kvsymdb_iterator_t kvsymdb_iterator_begin(kvsymdb_t *symdb_p);

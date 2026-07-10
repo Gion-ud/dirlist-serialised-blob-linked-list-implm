@@ -1,0 +1,331 @@
+1. -- insert all entries --
+it @ 0 
+it @ 1 
+it @ 2 
+it @ 3 
+it @ 4 
+it @ 5 
+it @ 6 
+it @ 7 
+it @ 8 
+it @ 9 
+it @ 10 
+it @ 11 
+it @ 12 
+
+2. -- get all entries (via raw buffer) --
+(DONT CRASH HERE!!!!!!)
+(
+	0,
+	0x4A891207,
+	0xE10F,
+	'operator new',
+	'libstdc++: new; new',
+	000001efa8627a08
+)
+(
+	1,
+	0x66AFE9AB,
+	0xE10F,
+	'operator new[]',
+	'libstdc++: new; new[]',
+	000001efa8627a40
+)
+(
+	2,
+	0x77E6BF94,
+	0xE10F,
+	'operator delete',
+	'libstdc++: new; delete',
+	000001efa8627a7c
+)
+(
+	3,
+	0x01AABF80,
+	0xE10F,
+	'operator delete[]',
+	'libstdc++: new; delete[]',
+	000001efa8627ab8
+)
+(
+	4,
+	0x0F071568,
+	0xE10F,
+	'new (mem) Type()',
+	'libstdc++; new (placement)',
+	000001efa8627af8
+)
+(IT DIDNT CRASH!!)
+
+2. -- get all entries --
+it
+(
+	0,
+	0x4A891207,
+	0xE10F,
+	'operator new',
+	'libstdc++: new; new',
+	000001efa8627a08
+)
+it
+(
+	1,
+	0x66AFE9AB,
+	0xE10F,
+	'operator new[]',
+	'libstdc++: new; new[]',
+	000001efa8627a40
+)
+it
+(
+	2,
+	0x77E6BF94,
+	0xE10F,
+	'operator delete',
+	'libstdc++: new; delete',
+	000001efa8627a7c
+)
+it
+(
+	3,
+	0x01AABF80,
+	0xE10F,
+	'operator delete[]',
+	'libstdc++: new; delete[]',
+	000001efa8627ab8
+)
+it
+(
+	4,
+	0x0F071568,
+	0xE10F,
+	'new (mem) Type()',
+	'libstdc++; new (placement)',
+	000001efa8627af8
+)
+
+2.a. -- get all entries with for each loop --
+it
+(
+	0,
+	0x4A891207,
+	0xE10F,
+	'operator new',
+	'libstdc++: new; new',
+	000001efa8627a08
+)
+it
+(
+	1,
+	0x66AFE9AB,
+	0xE10F,
+	'operator new[]',
+	'libstdc++: new; new[]',
+	000001efa8627a40
+)
+it
+(
+	2,
+	0x77E6BF94,
+	0xE10F,
+	'operator delete',
+	'libstdc++: new; delete',
+	000001efa8627a7c
+)
+it
+(
+	3,
+	0x01AABF80,
+	0xE10F,
+	'operator delete[]',
+	'libstdc++: new; delete[]',
+	000001efa8627ab8
+)
+it
+(
+	4,
+	0x0F071568,
+	0xE10F,
+	'new (mem) Type()',
+	'libstdc++; new (placement)',
+	000001efa8627af8
+)
+
+2.b. -- get all entries offset info --
+Current state: 
+	(5, 5, 308, 512)
+ent info: (0, 0, 56)
+Current state: 
+	(5, 5, 308, 512)
+ent info: (1, 56, 116)
+Current state: 
+	(5, 5, 308, 512)
+ent info: (2, 116, 176)
+Current state: 
+	(5, 5, 308, 512)
+ent info: (3, 176, 240)
+Current state: 
+	(5, 5, 308, 512)
+ent info: (4, 240, 308)
+
+3. -- unalive all entries logically --
+
+3. -- double mark dead to make sure it doesnt crash --
+
+???
+???
+4. -- get all DEAD BEEF entries --
+it
+#DEADBEEF entry!!!
+(
+	0,
+	0x4A891207,
+	0xE10F,
+	'operator new',
+	'libstdc++: new; new',
+	000001efa8627a08
+)
+it
+#DEADBEEF entry!!!
+(
+	1,
+	0x66AFE9AB,
+	0xE10F,
+	'operator new[]',
+	'libstdc++: new; new[]',
+	000001efa8627a40
+)
+it
+#DEADBEEF entry!!!
+(
+	2,
+	0x77E6BF94,
+	0xE10F,
+	'operator delete',
+	'libstdc++: new; delete',
+	000001efa8627a7c
+)
+it
+#DEADBEEF entry!!!
+(
+	3,
+	0x01AABF80,
+	0xE10F,
+	'operator delete[]',
+	'libstdc++: new; delete[]',
+	000001efa8627ab8
+)
+it
+#DEADBEEF entry!!!
+(
+	4,
+	0x0F071568,
+	0xE10F,
+	'new (mem) Type()',
+	'libstdc++; new (placement)',
+	000001efa8627af8
+)
+
+4. -- get all DEAD BEEF entries --
+it
+#DEADBEEF entry!!!
+(
+	0,
+	0x4A891207,
+	0xE10F,
+	'operator new',
+	'libstdc++: new; new',
+	000001efa8627a08
+)
+it
+#DEADBEEF entry!!!
+(
+	1,
+	0x66AFE9AB,
+	0xE10F,
+	'operator new[]',
+	'libstdc++: new; new[]',
+	000001efa8627a40
+)
+it
+#DEADBEEF entry!!!
+(
+	2,
+	0x77E6BF94,
+	0xE10F,
+	'operator delete',
+	'libstdc++: new; delete',
+	000001efa8627a7c
+)
+it
+#DEADBEEF entry!!!
+(
+	3,
+	0x01AABF80,
+	0xE10F,
+	'operator delete[]',
+	'libstdc++: new; delete[]',
+	000001efa8627ab8
+)
+it
+#DEADBEEF entry!!!
+(
+	4,
+	0x0F071568,
+	0xE10F,
+	'new (mem) Type()',
+	'libstdc++; new (placement)',
+	000001efa8627af8
+)
+
+ine660> 
+<main@file 'tests/tssym.cxx' line258> #1
+<main@file 'tests/tssym.cxx' line263> #2
+<main@file 'tests/tssym.cxx' line266> #3
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<main@file 'tests/tssym.cxx' line247> #0
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<main@file 'tests/tssym.cxx' line258> #1
+<main@file 'tests/tssym.cxx' line263> #2
+<main@file 'tests/tssym.cxx' line266> #3
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<main@file 'tests/tssym.cxx' line247> #0
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<main@file 'tests/tssym.cxx' line258> #1
+<main@file 'tests/tssym.cxx' line263> #2
+<main@file 'tests/tssym.cxx' line266> #3
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<main@file 'tests/tssym.cxx' line247> #0
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<main@file 'tests/tssym.cxx' line258> #1
+<main@file 'tests/tssym.cxx' line263> #2
+<main@file 'tests/tssym.cxx' line266> #3
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line647> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line647> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
+<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
