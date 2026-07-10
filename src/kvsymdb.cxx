@@ -571,7 +571,7 @@ extern "C" int kvsymdb_insert(
         is_aligned_off<uint32_t, cxx_kvsymdb::ALIGN_SIZE>(entsize);
     assert(is_aligned);
 
-    if (symdb_p->_buf_len + entsize >= symdb_p->_buf_size) {
+    if (symdb_p->_buf_len + entsize > symdb_p->_buf_size) {
         uint32_t new_bufsize = (entsize > symdb_p->_buf_size)
             ? entsize * 2 : symdb_p->_buf_size * 2;
         dbg_print(
