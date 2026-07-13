@@ -63,6 +63,8 @@ namespace _kvsymdb_intrnl {
             ERR_GC,
             ERR_CREATE,
             ERR_INSERT,
+            ERR_RDEOF, // 2
+            ERR_BADALIGN
         };
     };
 
@@ -238,6 +240,9 @@ _kvsymdb_intrnl::assert_intrnl_state(const kvsymdb_t *symdb_p) {
     assert(symdb_p->_buf_size >= cxx_kvsymdb::INIT_BUFSIZE);
     assert(symdb_p->_entrycap >= cxx_kvsymdb::INIT_ENTC);
     assert(symdb_p->_buf_len <= symdb_p->_buf_size);
+    bool is_aligned_buf_len = align_utils::\
+        is_aligned_off<uint32_t, cxx_kvsymdb::ALIGN_SIZE>(symdb_p->_buf_len);
+    assert(is_aligned_buf_len);
     assert(symdb_p->_entrycnt <= symdb_p->_entrycap);
     assert(symdb_p->_state_arr);
 }
@@ -254,7 +259,11 @@ _kvsymdb_intrnl::is_valid_entoff(
     const kvsymdb_entry_t *ent_p =
         reinterpret_cast<const kvsymdb_entry_t*>(symdb_p->_arena_buf + off);
 
-    return (off + ent_p->record_len <= symdb_p->_buf_len);
+    return (
+        off + ent_p->record_len <= symdb_p->_buf_len &&
+        align_utils::is_aligned_off<uint32_t, cxx_kvsymdb::ALIGN_SIZE>(off) &&
+        align_utils::is_aligned_off<uint32_t, cxx_kvsymdb::ALIGN_SIZE>(ent_p->record_len)
+    );
 }
 
 static inline bool _kvsymdb_intrnl::is_valid_entry(
@@ -278,7 +287,8 @@ static inline bool _kvsymdb_intrnl::is_valid_entry(
         record_begin >= arenabuf_begin &&
         record_end <= arenabuf_end &&
         ent_p->id < symdb_p->_entrycnt &&
-        entry_size == ent_p->record_len
+        entry_size == ent_p->record_len &&
+        align_utils::is_aligned_off<uint32_t, cxx_kvsymdb::ALIGN_SIZE>(ent_p->record_len)
     );
 }
 
@@ -788,6 +798,136 @@ kvsymdb_iterator_t kvsymdb_iterator_next(
             );
 }
 
+// reader methods:
+// reader.open() # reader(), init
+// reader.read()
+// reader.rewind()
+// reader.seek()
+// reader.close() # reader.~reader(), cleanup
+
+// init
+extern "C"
+int kvsymdb_reader_bind(
+    kvsymdb_reader_t   *reader_p,
+    const kvsymdb_t    *symdb_p,
+    int                *out_errno_p
+) {
+    // kvsymdb_t verification required
+    dbg_log_msg("");
+    if (!out_errno_p) return KVSYMDB_FAILED;
+    *out_errno_p = _kvsymdb_intrnl::error_code::NOERROR;
+    if (!reader_p || !symdb_p)
+        RETURN_FAILED_STAT_WITH_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_NULLPTR
+        );
+
+    reader_p->_symdb_p  = symdb_p;
+    reader_p->_pos      = 0u;
+
+    return KVSYMDB_SUCCESS;
+}
+
+const kvsymdb_entry_t *kvsymdb_reader_read(
+    kvsymdb_reader_t   *reader_p,
+    int                *out_errno_p
+) {
+    // kvsymdb_t verification required
+    dbg_log_msg("");
+    if (!out_errno_p) return nullptr;
+    *out_errno_p = _kvsymdb_intrnl::error_code::NOERROR;
+
+    dbg_log_msg("#1");
+    if (!reader_p || !reader_p->_symdb_p)
+        RETURN_SET_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_NULLPTR,
+            nullptr
+        );
+
+    dbg_log_msg("#2");
+    // check alignment
+    if (
+        reader_p->_pos &&
+        !align_utils::\
+            align_off<uint32_t, cxx_kvsymdb::ALIGN_SIZE>(reader_p->_pos)
+    ) {
+        RETURN_SET_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_BADALIGN,
+            nullptr
+        );
+    }
+
+    dbg_log_msg("#3");
+    // checking is _pos + min_reclen <= than buf_len so 
+    // the rec header is safe for deref
+    uint32_t min_reclen = sizeof(kvsymdb_record_header_t);
+    if (reader_p->_pos + min_reclen > reader_p->_symdb_p->_buf_len) {
+        reader_p->_pos = reader_p->_symdb_p->_buf_len; // EOF
+        RETURN_SET_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_RDEOF,
+            nullptr
+        );
+    }
+
+    dbg_log_msg("#4");
+    const kvsymdb_entry_t *ent_p =
+        reinterpret_cast<const kvsymdb_entry_t*>(
+            reader_p->_symdb_p->_arena_buf + reader_p->_pos
+        );
+
+    dbg_log_msg("#5");
+    if (!_kvsymdb_intrnl::is_valid_entry(reader_p->_symdb_p, ent_p)) {
+        // It is usually bc _pos + sizeof(header) >= buf_len
+        // so (Header*)((byte*)base + _pos) is safe to deref
+        // but _pos + header.rec_len_aligned > buf_len
+        // i.e. The payload is out of bound / truncated
+        // to be safe we set _pos to _buf_len (guaranteed EOF)
+        reader_p->_pos = reader_p->_symdb_p->_buf_len;
+        RETURN_SET_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_BADENT,
+            nullptr
+        );
+    }
+
+    _kvsymdb_intrnl::assert_intrnl_state(reader_p->_symdb_p); 
+   
+    reader_p->_pos += ent_p->record_len;    
+    assert(reader_p->_pos <= reader_p->_symdb_p->_buf_len);
+
+    return ent_p;
+}
+
+int kvsymdb_reader_rewind(
+    kvsymdb_reader_t   *reader_p
+) {
+    dbg_log_msg("");
+    if (!reader_p || !reader_p->_symdb_p)
+        return KVSYMDB_FAILED;
+
+    reader_p->_pos = 0u;
+
+    return KVSYMDB_SUCCESS;
+}
+
+// I will rethink about seek impl because it might not worth it
+// due to safety concerns
+
+// cleanup
+extern "C"
+void kvsymdb_reader_unbind(
+    kvsymdb_reader_t   *reader_p
+) {
+    dbg_log_msg("");
+    if (reader_p) {
+        reader_p->_symdb_p  = nullptr;
+        reader_p->_pos      = 0u;
+    }
+}
+
 extern "C"
 const char *kvsymdb_strerror(int kvsymdb_errno) {
     using namespace _kvsymdb_intrnl::error_code;
@@ -825,11 +965,15 @@ const char *kvsymdb_strerror(int kvsymdb_errno) {
             return "failed to create db";
         case (ERR_INSERT):
             return "failed to insert entry";
+        case (ERR_RDEOF):
+            return "arena EOF reached";
+        case (ERR_BADALIGN):
+            return "unaligned offset";
 
         default:
             break;
-
     }
 
     return "no error";
 }
+

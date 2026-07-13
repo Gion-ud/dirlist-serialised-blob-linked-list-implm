@@ -1,0 +1,53 @@
+
+// before C++11
+struct Type {
+private:
+    Resource *m_res_p;
+public:
+    // ...
+
+    Type& move_out(void *mem) noexcept { // move without Type&&; manual placement new
+        Type *new_type_p = static_cast<Type*>(mem);
+        new_type_p->m_res_p = this->m_res_p;
+        this->m_res_p       = NULL;
+        return *new_type_p;
+    }
+};
+
+// caller side:
+Type obj;
+unsigned char buf[sizeof(Type)];
+Type& obj_moved_ref = obj.move_out(buf);
+
+// after C++11
+
+struct Type {
+private:
+    Resource *m_res_p;
+public:
+    // ...
+
+    Type(Type&& other_rref) noexcept
+        m_res_p(other_rref.m_res_p)
+    { // move with Type&&; std::move
+        other_rref.m_res_p = nullptr;
+    }
+
+    Type& operator=(Type&& other_rref) noexcept { // move with Type&&; std::move
+        if (this != &other) {
+            delete m_res_p;
+            this->m_res_p = other_rref.m_res_p;
+            other_rref.m_res_p = nullptr;
+            return *this;
+        }
+    }
+};
+
+// caller side:
+Type obj;
+...
+Type obj1(std::move(obj));
+auto obj2 = std::move(obj1);
+
+
+

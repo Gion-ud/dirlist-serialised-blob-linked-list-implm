@@ -50,9 +50,8 @@ typedef kvsymdb_entry_t *kvsymdb_iterator_t;
 
 
 struct _c_kvsymdb_reader {
-    kvsymdb_t          *_symdb_p;   // [0]
-    kvsymdb_entview_t  *_entview_p; // [1]
-    uint32_t            _pos;       // [2]
+    const kvsymdb_t    *_symdb_p;   // [0]
+    uint32_t            _pos;       // [1]
 };
 
 extern kvsymdb_t *create_kvsymdb(uint32_t entc, uint32_t bufsize, int *out_errno_p);
@@ -121,6 +120,24 @@ extern kvsymdb_iterator_t kvsymdb_iterator_next(
     kvsymdb_iterator_t  iter
 );
 extern const char *kvsymdb_strerror(int kvsymdb_errno);
+
+// New APIs since 13/07/2026
+extern int kvsymdb_reader_bind(
+    kvsymdb_reader_t   *reader_p,
+    const kvsymdb_t    *symdb_p,
+    int                *out_errno_p
+);
+extern const kvsymdb_entry_t *kvsymdb_reader_read(
+    kvsymdb_reader_t   *reader_p,
+    int                *out_errno_p
+);
+extern int kvsymdb_reader_rewind(
+    kvsymdb_reader_t   *reader_p
+);
+extern void kvsymdb_reader_unbind(
+    kvsymdb_reader_t   *reader_p
+);
+
 
 enum kvsymdb_return_code {
     KVSYMDB_SUCCESS = 0,

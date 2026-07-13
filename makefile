@@ -2,7 +2,7 @@
 all: build/kvsymdb.o bin/tssym
 
 _C_CXX_FLAGS = -O2 -Wall -Wextra -fno-exceptions \
-	-fno-strict-aliasing -D_DEBUG -g
+	-fno-strict-aliasing -D_DEBUG #-DNDEBUG -g
 
 CFLAGS = $(_C_CXX_FLAGS) -std=c11
 

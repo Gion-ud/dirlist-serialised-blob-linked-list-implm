@@ -15,158 +15,78 @@ it @ 12
 
 2. -- get all entries (via raw buffer) --
 (DONT CRASH HERE!!!!!!)
-(
-	0,
-	0x4A891207,
-	0xE10F,
-	'operator new',
-	'libstdc++: new; new',
-	000001efa8627a08
-)
-(
-	1,
-	0x66AFE9AB,
-	0xE10F,
-	'operator new[]',
-	'libstdc++: new; new[]',
-	000001efa8627a40
-)
-(
-	2,
-	0x77E6BF94,
-	0xE10F,
-	'operator delete',
-	'libstdc++: new; delete',
-	000001efa8627a7c
-)
-(
-	3,
-	0x01AABF80,
-	0xE10F,
-	'operator delete[]',
-	'libstdc++: new; delete[]',
-	000001efa8627ab8
-)
-(
-	4,
-	0x0F071568,
-	0xE10F,
-	'new (mem) Type()',
-	'libstdc++; new (placement)',
-	000001efa8627af8
-)
 (IT DIDNT CRASH!!)
 
 2. -- get all entries --
 it
-(
-	0,
-	0x4A891207,
-	0xE10F,
-	'operator new',
-	'libstdc++: new; new',
-	000001efa8627a08
-)
 it
-(
-	1,
-	0x66AFE9AB,
-	0xE10F,
-	'operator new[]',
-	'libstdc++: new; new[]',
-	000001efa8627a40
-)
 it
-(
-	2,
-	0x77E6BF94,
-	0xE10F,
-	'operator delete',
-	'libstdc++: new; delete',
-	000001efa8627a7c
-)
 it
-(
-	3,
-	0x01AABF80,
-	0xE10F,
-	'operator delete[]',
-	'libstdc++: new; delete[]',
-	000001efa8627ab8
-)
 it
-(
-	4,
-	0x0F071568,
-	0xE10F,
-	'new (mem) Type()',
-	'libstdc++; new (placement)',
-	000001efa8627af8
-)
+it
+it
+it
+it
+it
+it
+it
+it
 
 2.a. -- get all entries with for each loop --
 it
-(
-	0,
-	0x4A891207,
-	0xE10F,
-	'operator new',
-	'libstdc++: new; new',
-	000001efa8627a08
-)
 it
-(
-	1,
-	0x66AFE9AB,
-	0xE10F,
-	'operator new[]',
-	'libstdc++: new; new[]',
-	000001efa8627a40
-)
 it
-(
-	2,
-	0x77E6BF94,
-	0xE10F,
-	'operator delete',
-	'libstdc++: new; delete',
-	000001efa8627a7c
-)
 it
-(
-	3,
-	0x01AABF80,
-	0xE10F,
-	'operator delete[]',
-	'libstdc++: new; delete[]',
-	000001efa8627ab8
-)
 it
-(
-	4,
-	0x0F071568,
-	0xE10F,
-	'new (mem) Type()',
-	'libstdc++; new (placement)',
-	000001efa8627af8
-)
+it
+it
+it
+it
+it
+it
+it
+it
 
 2.b. -- get all entries offset info --
 Current state: 
-	(5, 5, 308, 512)
+	(13, 32, 824, 1024)
 ent info: (0, 0, 56)
 Current state: 
-	(5, 5, 308, 512)
+	(13, 32, 824, 1024)
 ent info: (1, 56, 116)
 Current state: 
-	(5, 5, 308, 512)
+	(13, 32, 824, 1024)
 ent info: (2, 116, 176)
 Current state: 
-	(5, 5, 308, 512)
+	(13, 32, 824, 1024)
 ent info: (3, 176, 240)
 Current state: 
-	(5, 5, 308, 512)
+	(13, 32, 824, 1024)
 ent info: (4, 240, 308)
+Current state: 
+	(13, 32, 824, 1024)
+ent info: (5, 308, 356)
+Current state: 
+	(13, 32, 824, 1024)
+ent info: (6, 356, 404)
+Current state: 
+	(13, 32, 824, 1024)
+ent info: (7, 404, 484)
+Current state: 
+	(13, 32, 824, 1024)
+ent info: (8, 484, 556)
+Current state: 
+	(13, 32, 824, 1024)
+ent info: (9, 556, 632)
+Current state: 
+	(13, 32, 824, 1024)
+ent info: (10, 632, 696)
+Current state: 
+	(13, 32, 824, 1024)
+ent info: (11, 696, 752)
+Current state: 
+	(13, 32, 824, 1024)
+ent info: (12, 752, 824)
 
 3. -- unalive all entries logically --
 
@@ -174,158 +94,1116 @@ ent info: (4, 240, 308)
 
 ???
 ???
-4. -- get all DEAD BEEF entries --
+{
+	id=0,
+	hash=0x4A891207,
+	type=0xE10F,
+	name_len=12,
+	name='operator new',
+	data_len=19,
+	data='libstdc++: new; new',
+	addr=0000022f2c87b0d8
+}
+{
+	id=1,
+	hash=0x66AFE9AB,
+	type=0xE10F,
+	name_len=14,
+	name='operator new[]',
+	data_len=21,
+	data='libstdc++: new; new[]',
+	addr=0000022f2c87b110
+}
+{
+	id=2,
+	hash=0x77E6BF94,
+	type=0xE10F,
+	name_len=15,
+	name='operator delete',
+	data_len=22,
+	data='libstdc++: new; delete',
+	addr=0000022f2c87b14c
+}
+{
+	id=3,
+	hash=0x01AABF80,
+	type=0xE10F,
+	name_len=17,
+	name='operator delete[]',
+	data_len=24,
+	data='libstdc++: new; delete[]',
+	addr=0000022f2c87b188
+}
+{
+	id=4,
+	hash=0x0F071568,
+	type=0xE10F,
+	name_len=16,
+	name='new (mem) Type()',
+	data_len=26,
+	data='libstdc++; new (placement)',
+	addr=0000022f2c87b1c8
+}
+{
+	id=5,
+	hash=0xAD56D9F6,
+	type=0xE10F,
+	name_len=13,
+	name='Type::~Type()',
+	data_len=10,
+	data='destructor',
+	addr=0000022f2c87b20c
+}
+{
+	id=6,
+	hash=0x892DB7AA,
+	type=0xE10F,
+	name_len=12,
+	name='Type::Type()',
+	data_len=11,
+	data='constructor',
+	addr=0000022f2c87b23c
+}
+{
+	id=7,
+	hash=0x587A5F7F,
+	type=0xE10F,
+	name_len=18,
+	name='T *obj_p = new T()',
+	data_len=40,
+	data='operator new(sizeof(T)), new (obj_p) T()',
+	addr=0000022f2c87b26c
+}
+{
+	id=8,
+	hash=0xC7E77F14,
+	type=0xE10F,
+	name_len=12,
+	name='delete obj_p',
+	data_len=35,
+	data='obj_p->~T(), operator delete(obj_p)',
+	addr=0000022f2c87b2bc
+}
+{
+	id=9,
+	hash=0x99680971,
+	type=0xE10F,
+	name_len=14,
+	name='std::vector<T>',
+	data_len=38,
+	data='libstdc++: vector (STL, dynamic array)',
+	addr=0000022f2c87b304
+}
+{
+	id=10,
+	hash=0xD3FA376B,
+	type=0xE10F,
+	name_len=16,
+	name='std::array<T, N>',
+	data_len=22,
+	data='libstdc++: array (STL)',
+	addr=0000022f2c87b350
+}
+{
+	id=11,
+	hash=0x67D49E69,
+	type=0xE10F,
+	name_len=19,
+	name='std::addressof(obj)',
+	data_len=15,
+	data='libstdc++: &obj',
+	addr=0000022f2c87b390
+}
+{
+	id=12,
+	hash=0xE59CA66E,
+	type=0xE10F,
+	name_len=18,
+	name='std::unique_ptr<T>',
+	data_len=29,
+	data='libstdc++: memory; unique_ptr',
+	addr=0000022f2c87b3c8
+}
+{
+	id=0,
+	hash=0x4A891207,
+	type=0xE10F,
+	name_len=12,
+	name='operator new',
+	data_len=19,
+	data='libstdc++: new; new',
+	addr=0000022f2c87b0d8
+}
+{
+	id=1,
+	hash=0x66AFE9AB,
+	type=0xE10F,
+	name_len=14,
+	name='operator new[]',
+	data_len=21,
+	data='libstdc++: new; new[]',
+	addr=0000022f2c87b110
+}
+{
+	id=2,
+	hash=0x77E6BF94,
+	type=0xE10F,
+	name_len=15,
+	name='operator delete',
+	data_len=22,
+	data='libstdc++: new; delete',
+	addr=0000022f2c87b14c
+}
+{
+	id=3,
+	hash=0x01AABF80,
+	type=0xE10F,
+	name_len=17,
+	name='operator delete[]',
+	data_len=24,
+	data='libstdc++: new; delete[]',
+	addr=0000022f2c87b188
+}
+{
+	id=4,
+	hash=0x0F071568,
+	type=0xE10F,
+	name_len=16,
+	name='new (mem) Type()',
+	data_len=26,
+	data='libstdc++; new (placement)',
+	addr=0000022f2c87b1c8
+}
+{
+	id=5,
+	hash=0xAD56D9F6,
+	type=0xE10F,
+	name_len=13,
+	name='Type::~Type()',
+	data_len=10,
+	data='destructor',
+	addr=0000022f2c87b20c
+}
+{
+	id=6,
+	hash=0x892DB7AA,
+	type=0xE10F,
+	name_len=12,
+	name='Type::Type()',
+	data_len=11,
+	data='constructor',
+	addr=0000022f2c87b23c
+}
+{
+	id=7,
+	hash=0x587A5F7F,
+	type=0xE10F,
+	name_len=18,
+	name='T *obj_p = new T()',
+	data_len=40,
+	data='operator new(sizeof(T)), new (obj_p) T()',
+	addr=0000022f2c87b26c
+}
+{
+	id=8,
+	hash=0xC7E77F14,
+	type=0xE10F,
+	name_len=12,
+	name='delete obj_p',
+	data_len=35,
+	data='obj_p->~T(), operator delete(obj_p)',
+	addr=0000022f2c87b2bc
+}
+{
+	id=9,
+	hash=0x99680971,
+	type=0xE10F,
+	name_len=14,
+	name='std::vector<T>',
+	data_len=38,
+	data='libstdc++: vector (STL, dynamic array)',
+	addr=0000022f2c87b304
+}
+{
+	id=10,
+	hash=0xD3FA376B,
+	type=0xE10F,
+	name_len=16,
+	name='std::array<T, N>',
+	data_len=22,
+	data='libstdc++: array (STL)',
+	addr=0000022f2c87b350
+}
+{
+	id=11,
+	hash=0x67D49E69,
+	type=0xE10F,
+	name_len=19,
+	name='std::addressof(obj)',
+	data_len=15,
+	data='libstdc++: &obj',
+	addr=0000022f2c87b390
+}
+{
+	id=12,
+	hash=0xE59CA66E,
+	type=0xE10F,
+	name_len=18,
+	name='std::unique_ptr<T>',
+	data_len=29,
+	data='libstdc++: memory; unique_ptr',
+	addr=0000022f2c87b3c8
+}
+{
+	id=0,
+	hash=0x4A891207,
+	type=0xE10F,
+	name_len=12,
+	name='operator new',
+	data_len=19,
+	data='libstdc++: new; new',
+	addr=0000022f2c87b0d8
+}
+{
+	id=1,
+	hash=0x66AFE9AB,
+	type=0xE10F,
+	name_len=14,
+	name='operator new[]',
+	data_len=21,
+	data='libstdc++: new; new[]',
+	addr=0000022f2c87b110
+}
+{
+	id=2,
+	hash=0x77E6BF94,
+	type=0xE10F,
+	name_len=15,
+	name='operator delete',
+	data_len=22,
+	data='libstdc++: new; delete',
+	addr=0000022f2c87b14c
+}
+{
+	id=3,
+	hash=0x01AABF80,
+	type=0xE10F,
+	name_len=17,
+	name='operator delete[]',
+	data_len=24,
+	data='libstdc++: new; delete[]',
+	addr=0000022f2c87b188
+}
+{
+	id=4,
+	hash=0x0F071568,
+	type=0xE10F,
+	name_len=16,
+	name='new (mem) Type()',
+	data_len=26,
+	data='libstdc++; new (placement)',
+	addr=0000022f2c87b1c8
+}
+{
+	id=5,
+	hash=0xAD56D9F6,
+	type=0xE10F,
+	name_len=13,
+	name='Type::~Type()',
+	data_len=10,
+	data='destructor',
+	addr=0000022f2c87b20c
+}
+{
+	id=6,
+	hash=0x892DB7AA,
+	type=0xE10F,
+	name_len=12,
+	name='Type::Type()',
+	data_len=11,
+	data='constructor',
+	addr=0000022f2c87b23c
+}
+{
+	id=7,
+	hash=0x587A5F7F,
+	type=0xE10F,
+	name_len=18,
+	name='T *obj_p = new T()',
+	data_len=40,
+	data='operator new(sizeof(T)), new (obj_p) T()',
+	addr=0000022f2c87b26c
+}
+{
+	id=8,
+	hash=0xC7E77F14,
+	type=0xE10F,
+	name_len=12,
+	name='delete obj_p',
+	data_len=35,
+	data='obj_p->~T(), operator delete(obj_p)',
+	addr=0000022f2c87b2bc
+}
+{
+	id=9,
+	hash=0x99680971,
+	type=0xE10F,
+	name_len=14,
+	name='std::vector<T>',
+	data_len=38,
+	data='libstdc++: vector (STL, dynamic array)',
+	addr=0000022f2c87b304
+}
+{
+	id=10,
+	hash=0xD3FA376B,
+	type=0xE10F,
+	name_len=16,
+	name='std::array<T, N>',
+	data_len=22,
+	data='libstdc++: array (STL)',
+	addr=0000022f2c87b350
+}
+{
+	id=11,
+	hash=0x67D49E69,
+	type=0xE10F,
+	name_len=19,
+	name='std::addressof(obj)',
+	data_len=15,
+	data='libstdc++: &obj',
+	addr=0000022f2c87b390
+}
+{
+	id=12,
+	hash=0xE59CA66E,
+	type=0xE10F,
+	name_len=18,
+	name='std::unique_ptr<T>',
+	data_len=29,
+	data='libstdc++: memory; unique_ptr',
+	addr=0000022f2c87b3c8
+}
+{
+	id=0,
+	hash=0x4A891207,
+	type=0xE10F,
+	name_len=12,
+	name='operator new',
+	data_len=19,
+	data='libstdc++: new; new',
+	addr=0000022f2c87b0d8
+}
+{
+	id=1,
+	hash=0x66AFE9AB,
+	type=0xE10F,
+	name_len=14,
+	name='operator new[]',
+	data_len=21,
+	data='libstdc++: new; new[]',
+	addr=0000022f2c87b110
+}
+{
+	id=2,
+	hash=0x77E6BF94,
+	type=0xE10F,
+	name_len=15,
+	name='operator delete',
+	data_len=22,
+	data='libstdc++: new; delete',
+	addr=0000022f2c87b14c
+}
+{
+	id=3,
+	hash=0x01AABF80,
+	type=0xE10F,
+	name_len=17,
+	name='operator delete[]',
+	data_len=24,
+	data='libstdc++: new; delete[]',
+	addr=0000022f2c87b188
+}
+{
+	id=4,
+	hash=0x0F071568,
+	type=0xE10F,
+	name_len=16,
+	name='new (mem) Type()',
+	data_len=26,
+	data='libstdc++; new (placement)',
+	addr=0000022f2c87b1c8
+}
+{
+	id=5,
+	hash=0xAD56D9F6,
+	type=0xE10F,
+	name_len=13,
+	name='Type::~Type()',
+	data_len=10,
+	data='destructor',
+	addr=0000022f2c87b20c
+}
+{
+	id=6,
+	hash=0x892DB7AA,
+	type=0xE10F,
+	name_len=12,
+	name='Type::Type()',
+	data_len=11,
+	data='constructor',
+	addr=0000022f2c87b23c
+}
+{
+	id=7,
+	hash=0x587A5F7F,
+	type=0xE10F,
+	name_len=18,
+	name='T *obj_p = new T()',
+	data_len=40,
+	data='operator new(sizeof(T)), new (obj_p) T()',
+	addr=0000022f2c87b26c
+}
+{
+	id=8,
+	hash=0xC7E77F14,
+	type=0xE10F,
+	name_len=12,
+	name='delete obj_p',
+	data_len=35,
+	data='obj_p->~T(), operator delete(obj_p)',
+	addr=0000022f2c87b2bc
+}
+{
+	id=9,
+	hash=0x99680971,
+	type=0xE10F,
+	name_len=14,
+	name='std::vector<T>',
+	data_len=38,
+	data='libstdc++: vector (STL, dynamic array)',
+	addr=0000022f2c87b304
+}
+{
+	id=10,
+	hash=0xD3FA376B,
+	type=0xE10F,
+	name_len=16,
+	name='std::array<T, N>',
+	data_len=22,
+	data='libstdc++: array (STL)',
+	addr=0000022f2c87b350
+}
+{
+	id=11,
+	hash=0x67D49E69,
+	type=0xE10F,
+	name_len=19,
+	name='std::addressof(obj)',
+	data_len=15,
+	data='libstdc++: &obj',
+	addr=0000022f2c87b390
+}
+{
+	id=12,
+	hash=0xE59CA66E,
+	type=0xE10F,
+	name_len=18,
+	name='std::unique_ptr<T>',
+	data_len=29,
+	data='libstdc++: memory; unique_ptr',
+	addr=0000022f2c87b3c8
+}
+{
+	id=0,
+	hash=0xE59CA66E,
+	type=0xE10F,
+	name_len=18,
+	name='std::unique_ptr<T>',
+	data_len=29,
+	data='libstdc++: memory; unique_ptr',
+	addr=0000022f2c87bd18
+}
+{
+	id=1,
+	hash=0x67D49E69,
+	type=0xE10F,
+	name_len=19,
+	nam4. -- get all DEAD BEEF entries --
 it
 #DEADBEEF entry!!!
-(
-	0,
-	0x4A891207,
-	0xE10F,
-	'operator new',
-	'libstdc++: new; new',
-	000001efa8627a08
-)
 it
 #DEADBEEF entry!!!
-(
-	1,
-	0x66AFE9AB,
-	0xE10F,
-	'operator new[]',
-	'libstdc++: new; new[]',
-	000001efa8627a40
-)
 it
 #DEADBEEF entry!!!
-(
-	2,
-	0x77E6BF94,
-	0xE10F,
-	'operator delete',
-	'libstdc++: new; delete',
-	000001efa8627a7c
-)
 it
 #DEADBEEF entry!!!
-(
-	3,
-	0x01AABF80,
-	0xE10F,
-	'operator delete[]',
-	'libstdc++: new; delete[]',
-	000001efa8627ab8
-)
 it
 #DEADBEEF entry!!!
-(
-	4,
-	0x0F071568,
-	0xE10F,
-	'new (mem) Type()',
-	'libstdc++; new (placement)',
-	000001efa8627af8
-)
+it
+#DEADBEEF entry!!!
+it
+#DEADBEEF entry!!!
+it
+#DEADBEEF entry!!!
+it
+#DEADBEEF entry!!!
+it
+#DEADBEEF entry!!!
+it
+#DEADBEEF entry!!!
+it
+#DEADBEEF entry!!!
+it
+#DEADBEEF entry!!!
 
-4. -- get all DEAD BEEF entries --
+1. -- insert all entries (again) --
+it @ 0 
+it @ 1 
+it @ 2 
+it @ 3 
+it @ 4 
+it @ 5 
+it @ 6 
+it @ 7 
+it @ 8 
+it @ 9 
+it @ 10 
+it @ 11 
+it @ 12 
+5. -- compaction --
+6. -- get all DEAD BEEF entries --
 it
-#DEADBEEF entry!!!
-(
-	0,
-	0x4A891207,
-	0xE10F,
-	'operator new',
-	'libstdc++: new; new',
-	000001efa8627a08
-)
 it
-#DEADBEEF entry!!!
-(
-	1,
-	0x66AFE9AB,
-	0xE10F,
-	'operator new[]',
-	'libstdc++: new; new[]',
-	000001efa8627a40
-)
 it
-#DEADBEEF entry!!!
-(
-	2,
-	0x77E6BF94,
-	0xE10F,
-	'operator delete',
-	'libstdc++: new; delete',
-	000001efa8627a7c
-)
 it
-#DEADBEEF entry!!!
-(
-	3,
-	0x01AABF80,
-	0xE10F,
-	'operator delete[]',
-	'libstdc++: new; delete[]',
-	000001efa8627ab8
-)
 it
-#DEADBEEF entry!!!
-(
-	4,
-	0x0F071568,
-	0xE10F,
-	'new (mem) Type()',
-	'libstdc++; new (placement)',
-	000001efa8627af8
-)
+it
+it
+it
+it
+it
+it
+it
+it
 
-ine660> 
-<main@file 'tests/tssym.cxx' line258> #1
-<main@file 'tests/tssym.cxx' line263> #2
-<main@file 'tests/tssym.cxx' line266> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<main@file 'tests/tssym.cxx' line247> #0
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<main@file 'tests/tssym.cxx' line258> #1
-<main@file 'tests/tssym.cxx' line263> #2
-<main@file 'tests/tssym.cxx' line266> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<main@file 'tests/tssym.cxx' line247> #0
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<main@file 'tests/tssym.cxx' line258> #1
-<main@file 'tests/tssym.cxx' line263> #2
-<main@file 'tests/tssym.cxx' line266> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<main@file 'tests/tssym.cxx' line247> #0
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<main@file 'tests/tssym.cxx' line258> #1
-<main@file 'tests/tssym.cxx' line263> #2
-<main@file 'tests/tssym.cxx' line266> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line647> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line647> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line676> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line660> 
+7. -- testing reader --
+
+SCOPE_BEGIN
+it
+it
+it
+it
+it
+it
+it
+it
+it
+it
+it
+it
+it
+
+-- reader rewind and now redo --
+it
+it
+it
+it
+it
+it
+it
+it
+it
+it
+it
+it
+it
+SCOPE_END
+e='std::addressof(obj)',
+	data_len=15,
+	data='libstdc++: &obj',
+	addr=0000022f2c87bd60
+}
+{
+	id=2,
+	hash=0xD3FA376B,
+	type=0xE10F,
+	name_len=16,
+	name='std::array<T, N>',
+	data_len=22,
+	data='libstdc++: array (STL)',
+	addr=0000022f2c87bd98
+}
+{
+	id=3,
+	hash=0x99680971,
+	type=0xE10F,
+	name_len=14,
+	name='std::vector<T>',
+	data_len=38,
+	data='libstdc++: vector (STL, dynamic array)',
+	addr=0000022f2c87bdd8
+}
+{
+	id=4,
+	hash=0xC7E77F14,
+	type=0xE10F,
+	name_len=12,
+	name='delete obj_p',
+	data_len=35,
+	data='obj_p->~T(), operator delete(obj_p)',
+	addr=0000022f2c87be24
+}
+{
+	id=5,
+	hash=0x587A5F7F,
+	type=0xE10F,
+	name_len=18,
+	name='T *obj_p = new T()',
+	data_len=40,
+	data='operator new(sizeof(T)), new (obj_p) T()',
+	addr=0000022f2c87be6c
+}
+{
+	id=6,
+	hash=0x892DB7AA,
+	type=0xE10F,
+	name_len=12,
+	name='Type::Type()',
+	data_len=11,
+	data='constructor',
+	addr=0000022f2c87bebc
+}
+{
+	id=7,
+	hash=0xAD56D9F6,
+	type=0xE10F,
+	name_len=13,
+	name='Type::~Type()',
+	data_len=10,
+	data='destructor',
+	addr=0000022f2c87beec
+}
+{
+	id=8,
+	hash=0x0F071568,
+	type=0xE10F,
+	name_len=16,
+	name='new (mem) Type()',
+	data_len=26,
+	data='libstdc++; new (placement)',
+	addr=0000022f2c87bf1c
+}
+{
+	id=9,
+	hash=0x01AABF80,
+	type=0xE10F,
+	name_len=17,
+	name='operator delete[]',
+	data_len=24,
+	data='libstdc++: new; delete[]',
+	addr=0000022f2c87bf60
+}
+{
+	id=10,
+	hash=0x77E6BF94,
+	type=0xE10F,
+	name_len=15,
+	name='operator delete',
+	data_len=22,
+	data='libstdc++: new; delete',
+	addr=0000022f2c87bfa0
+}
+{
+	id=11,
+	hash=0x66AFE9AB,
+	type=0xE10F,
+	name_len=14,
+	name='operator new[]',
+	data_len=21,
+	data='libstdc++: new; new[]',
+	addr=0000022f2c87bfdc
+}
+{
+	id=12,
+	hash=0x4A891207,
+	type=0xE10F,
+	name_len=12,
+	name='operator new',
+	data_len=19,
+	data='libstdc++: new; new',
+	addr=0000022f2c87c018
+}
+{
+	id=0,
+	hash=0xE59CA66E,
+	type=0xE10F,
+	name_len=18,
+	name='std::unique_ptr<T>',
+	data_len=29,
+	data='libstdc++: memory; unique_ptr',
+	addr=0000022f2c87bd18
+}
+{
+	id=1,
+	hash=0x67D49E69,
+	type=0xE10F,
+	name_len=19,
+	name='std::addressof(obj)',
+	data_len=15,
+	data='libstdc++: &obj',
+	addr=0000022f2c87bd60
+}
+{
+	id=2,
+	hash=0xD3FA376B,
+	type=0xE10F,
+	name_len=16,
+	name='std::array<T, N>',
+	data_len=22,
+	data='libstdc++: array (STL)',
+	addr=0000022f2c87bd98
+}
+{
+	id=3,
+	hash=0x99680971,
+	type=0xE10F,
+	name_len=14,
+	name='std::vector<T>',
+	data_len=38,
+	data='libstdc++: vector (STL, dynamic array)',
+	addr=0000022f2c87bdd8
+}
+{
+	id=4,
+	hash=0xC7E77F14,
+	type=0xE10F,
+	name_len=12,
+	name='delete obj_p',
+	data_len=35,
+	data='obj_p->~T(), operator delete(obj_p)',
+	addr=0000022f2c87be24
+}
+{
+	id=5,
+	hash=0x587A5F7F,
+	type=0xE10F,
+	name_len=18,
+	name='T *obj_p = new T()',
+	data_len=40,
+	data='operator new(sizeof(T)), new (obj_p) T()',
+	addr=0000022f2c87be6c
+}
+{
+	id=6,
+	hash=0x892DB7AA,
+	type=0xE10F,
+	name_len=12,
+	name='Type::Type()',
+	data_len=11,
+	data='constructor',
+	addr=0000022f2c87bebc
+}
+{
+	id=7,
+	hash=0xAD56D9F6,
+	type=0xE10F,
+	name_len=13,
+	name='Type::~Type()',
+	data_len=10,
+	data='destructor',
+	addr=0000022f2c87beec
+}
+{
+	id=8,
+	hash=0x0F071568,
+	type=0xE10F,
+	name_len=16,
+	name='new (mem) Type()',
+	data_len=26,
+	data='libstdc++; new (placement)',
+	addr=0000022f2c87bf1c
+}
+{
+	id=9,
+	hash=0x01AABF80,
+	type=0xE10F,
+	name_len=17,
+	name='operator delete[]',
+	data_len=24,
+	data='libstdc++: new; delete[]',
+	addr=0000022f2c87bf60
+}
+{
+	id=10,
+	hash=0x77E6BF94,
+	type=0xE10F,
+	name_len=15,
+	name='operator delete',
+	data_len=22,
+	data='libstdc++: new; delete',
+	addr=0000022f2c87bfa0
+}
+{
+	id=11,
+	hash=0x66AFE9AB,
+	type=0xE10F,
+	name_len=14,
+	name='operator new[]',
+	data_len=21,
+	data='libstdc++: new; new[]',
+	addr=0000022f2c87bfdc
+}
+{
+	id=12,
+	hash=0x4A891207,
+	type=0xE10F,
+	name_len=12,
+	name='operator new',
+	data_len=19,
+	data='libstdc++: new; new',
+	addr=0000022f2c87c018
+}
+{
+	id=0,
+	hash=0xE59CA66E,
+	type=0xE10F,
+	name_len=18,
+	name='std::unique_ptr<T>',
+	data_len=29,
+	data='libstdc++: memory; unique_ptr',
+	addr=0000022f2c87bd18
+}
+{
+	id=1,
+	hash=0x67D49E69,
+	type=0xE10F,
+	name_len=19,
+	name='std::addressof(obj)',
+	data_len=15,
+	data='libstdc++: &obj',
+	addr=0000022f2c87bd60
+}
+{
+	id=2,
+	hash=0xD3FA376B,
+	type=0xE10F,
+	name_len=16,
+	name='std::array<T, N>',
+	data_len=22,
+	data='libstdc++: array (STL)',
+	addr=0000022f2c87bd98
+}
+{
+	id=3,
+	hash=0x99680971,
+	type=0xE10F,
+	name_len=14,
+	name='std::vector<T>',
+	data_len=38,
+	data='libstdc++: vector (STL, dynamic array)',
+	addr=0000022f2c87bdd8
+}
+{
+	id=4,
+	hash=0xC7E77F14,
+	type=0xE10F,
+	name_len=12,
+	name='delete obj_p',
+	data_len=35,
+	data='obj_p->~T(), operator delete(obj_p)',
+	addr=0000022f2c87be24
+}
+{
+	id=5,
+	hash=0x587A5F7F,
+	type=0xE10F,
+	name_len=18,
+	name='T *obj_p = new T()',
+	data_len=40,
+	data='operator new(sizeof(T)), new (obj_p) T()',
+	addr=0000022f2c87be6c
+}
+{
+	id=6,
+	hash=0x892DB7AA,
+	type=0xE10F,
+	name_len=12,
+	name='Type::Type()',
+	data_len=11,
+	data='constructor',
+	addr=0000022f2c87bebc
+}
+{
+	id=7,
+	hash=0xAD56D9F6,
+	type=0xE10F,
+	name_len=13,
+	name='Type::~Type()',
+	data_len=10,
+	data='destructor',
+	addr=0000022f2c87beec
+}
+{
+	id=8,
+	hash=0x0F071568,
+	type=0xE10F,
+	name_len=16,
+	name='new (mem) Type()',
+	data_len=26,
+	data='libstdc++; new (placement)',
+	addr=0000022f2c87bf1c
+}
+{
+	id=9,
+	hash=0x01AABF80,
+	type=0xE10F,
+	name_len=17,
+	name='operator delete[]',
+	data_len=24,
+	data='libstdc++: new; delete[]',
+	addr=0000022f2c87bf60
+}
+{
+	id=10,
+	hash=0x77E6BF94,
+	type=0xE10F,
+	name_len=15,
+	name='operator delete',
+	data_len=22,
+	data='libstdc++: new; delete',
+	addr=0000022f2c87bfa0
+}
+{
+	id=11,
+	hash=0x66AFE9AB,
+	type=0xE10F,
+	name_len=14,
+	name='operator new[]',
+	data_len=21,
+	data='libstdc++: new; new[]',
+	addr=0000022f2c87bfdc
+}
+{
+	id=12,
+	hash=0x4A891207,
+	type=0xE10F,
+	name_len=12,
+	name='operator new',
+	data_len=19,
+	data='libstdc++: new; new',
+	addr=0000022f2c87c018
+}
+8> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_rewind@file 'src/kvsymdb.cxx' line907> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line875> #4
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line881> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line836> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line840> #1
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line848> #2
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line862> #3
+<kvsymdb_reader_unbind@file 'src/kvsymdb.cxx' line924> 
+real	0m 0.03s
+user	0m 0.01s
+sys	0m 0.00s
