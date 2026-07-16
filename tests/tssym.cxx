@@ -22,20 +22,6 @@ constexpr size_t c_array_length(T (&)[N]){
     return N;
 }
 
-struct kvsymdb_strview : kvsymdb_bufview_t {
-    kvsymdb_strview(const char *cstr) noexcept {
-        this->data = static_cast<const void*>(cstr);
-        this->size = strlen(cstr);
-    }
-    kvsymdb_bufview_t &get_base() noexcept {
-        return *this;
-    }
-    uint32_t hash32() noexcept {
-        return fnv_1a_hash32(this->data, this->size);   
-    }
-};
-
-
 const cstr_kv rectbl[] = {
     { "operator new", "libstdc++: new; new" },
     { "operator new[]", "libstdc++: new; new[]" },
@@ -307,7 +293,7 @@ int main() {
     std::cout << "1. -- insert all entries (again) --\n";
     for (auto i = 0u; i < rectbl_len; ++i) {
         std::cout << "it @ " << i << " \n";
-        kvsymdb_strview key(rectbl[rectbl_len - i - 1].name), val(rectbl[rectbl_len - i - 1].data);
+        kvsymdb::string_view key(rectbl[rectbl_len - i - 1].name), val(rectbl[rectbl_len - i - 1].data);
         int rc = dbp->insert(key, val, ENT_TYPE);
         if (rc) {
             std::cerr << "dbp->insert failed: " << dbp->errmsg() << "\n";
@@ -388,6 +374,133 @@ int main() {
         }
 
         std::cout << "SCOPE_END\n";
+    }
+
+
+    std::cout << "------ test hash table ------" << std::endl;
+    {
+        kvsymdb::self_state dbst{};
+        int rc = dbp->get_self_state(&dbst);
+        assert(!rc);
+    
+        kvsymdb::hash_table hidx{};
+        rc = hidx.init(*dbp, dbst.ent_capacity);
+        assert(!rc);
+
+        std::cout << "\n------ insert all entries ------" << std::endl;
+        for (auto &ent_ref : *dbp) {
+            rc = hidx.insert(&ent_ref);
+            if (rc) {
+                std::cerr << "lookup_result failed: " << hidx.errmsg() << std::endl;
+                hidx.clearerr();
+                break;
+            }
+        }
+
+        std::cout << "\n------ get all entries ------" << std::endl;
+        for (auto &ent_ref : *dbp) {
+            kvsymdb::entry_view ent_view{};
+            int rc = dbp->get_entview(&ent_ref, &ent_view);
+            if (rc) {
+                std::cerr << "dbp->get_entview failed: " << dbp->errmsg() << std::endl;
+                dbp->clearerr();
+                break;
+            }
+            kvsymdb::string_view key(ent_view.name, ent_view.name_len);
+            auto *ent_p = hidx.lookup(key);
+            if (!ent_p) {
+                std::cerr << "hidx.lookup failed: " << hidx.errmsg() << std::endl;
+                hidx.clearerr();
+                break;
+            }
+            rc = dbp->get_entview(ent_p, &ent_view);
+            if (rc) {
+                std::cerr << "dbp->get_entview failed: " << dbp->errmsg() << std::endl;
+                dbp->clearerr();
+                break;
+            }
+            kvsymdb_utils::print_entry_view(ent_view);
+        }
+
+        std::cout << "\n------ delete all entries ------" << std::endl;
+        for (auto &ent_ref : *dbp) {
+            int rc = hidx.remove(&ent_ref);
+            if (rc) {
+                std::cerr << "hidx.remove failed: " << hidx.errmsg() << std::endl;
+                hidx.clearerr();
+                break;
+            }
+        }
+
+        std::cout << "\n------ get all entries ------" << std::endl;
+        for (auto &ent_ref : *dbp) {
+            kvsymdb::entry_view ent_view{};
+            int rc = dbp->get_entview(&ent_ref, &ent_view);
+            if (rc) {
+                std::cerr << "dbp->get_entview failed: " << dbp->errmsg() << std::endl;
+                dbp->clearerr();
+                break;
+            }
+            kvsymdb::string_view key(ent_view.name, ent_view.name_len);
+            auto *ent_p = hidx.lookup(key);
+            if (!ent_p) {
+                std::cerr << "hidx.lookup failed: " << hidx.errmsg() << std::endl;
+                hidx.clearerr();
+                break;
+            }
+            rc = dbp->get_entview(ent_p, &ent_view);
+            if (rc) {
+                std::cerr << "dbp->get_entview failed: " << dbp->errmsg() << std::endl;
+                dbp->clearerr();
+                break;
+            }
+            kvsymdb_utils::print_entry_view(ent_view);
+        }
+
+        std::cout << "\n------ insert all entries AGAIN ------" << std::endl;
+        for (auto &ent_ref : *dbp) {
+            rc = hidx.insert(&ent_ref);
+            if (rc) {
+                std::cerr << "lookup_result failed: " << hidx.errmsg() << std::endl;
+                hidx.clearerr();
+                break;
+            }
+        }
+
+        std::cout << "\n------ get all entries ------" << std::endl;
+        for (auto &ent_ref : *dbp) {
+            kvsymdb::entry_view ent_view{};
+            int rc = dbp->get_entview(&ent_ref, &ent_view);
+            if (rc) {
+                std::cerr << "dbp->get_entview failed: " << dbp->errmsg() << std::endl;
+                dbp->clearerr();
+                break;
+            }
+            kvsymdb::string_view key(ent_view.name, ent_view.name_len);
+            auto *ent_p = hidx.lookup(key);
+            if (!ent_p) {
+                std::cerr << "hidx.lookup failed: " << hidx.errmsg() << std::endl;
+                hidx.clearerr();
+                break;
+            }
+            rc = dbp->get_entview(ent_p, &ent_view);
+            if (rc) {
+                std::cerr << "dbp->get_entview failed: " << dbp->errmsg() << std::endl;
+                dbp->clearerr();
+                break;
+            }
+            kvsymdb_utils::print_entry_view(ent_view);
+        }
+
+        std::cout << "\n------ delete all entries ------" << std::endl;
+        for (auto &ent_ref : *dbp) {
+            int rc = hidx.remove(&ent_ref);
+            if (rc) {
+                std::cerr << "hidx.remove failed: " << hidx.errmsg() << std::endl;
+                hidx.clearerr();
+                break;
+            }
+        }
     }
 
     //dbp->~kvsymdb(); 

@@ -65,9 +65,6 @@ struct _kvsymdb_hidx_slot {
 
 typedef struct _c_kvsymdb_hidx kvsymdb_hash_index_t;
 
-
-
-
 extern kvsymdb_t *create_kvsymdb(uint32_t entc, uint32_t bufsize, int *out_errno_p);
 extern void destroy_kvsymdb(kvsymdb_t *symdb_p);
 extern int kvsymdb_get_intrnl_state_view(
@@ -151,6 +148,34 @@ extern int kvsymdb_reader_rewind(
 extern void kvsymdb_reader_unbind(
     kvsymdb_reader_t   *reader_p
 );
+
+
+
+extern kvsymdb_hash_index_t *
+create_kvsymdb_hash_index(
+    const kvsymdb_t    *symdb_p,
+    int                *out_errno_p
+);
+extern void destroy_kvsymdb_hash_index(
+    kvsymdb_hash_index_t *c_hidx_p
+);
+extern int kvsymdb_hidx_insert(
+    kvsymdb_hash_index_t   *c_hidx_p,
+    const kvsymdb_entry_t  *ent_p,
+    int                    *out_errno_p
+);
+extern const kvsymdb_entry_t *
+kvsymdb_hidx_lookup(
+    kvsymdb_hash_index_t       *c_hidx_p,
+    const kvsymdb_bufview_t    *key_p,
+    int                        *out_errno_p
+);
+extern int kvsymdb_hidx_remove(
+    kvsymdb_hash_index_t   *c_hidx_p,
+    const kvsymdb_entry_t  *ent_p,
+    int                    *out_errno_p
+);
+
 
 
 enum kvsymdb_return_code {

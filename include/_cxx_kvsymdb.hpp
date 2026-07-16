@@ -31,7 +31,7 @@ namespace cxx_kvsymdb {
                 this->data = cstr;
                 this->size = strlen(cstr);
             }
-            string_view(buffer_view &buf_view) noexcept {
+            string_view(const buffer_view &buf_view) noexcept {
                 this->data = buf_view.data;
                 this->size = buf_view.size;
             }
@@ -93,14 +93,14 @@ namespace cxx_kvsymdb {
             return *this;
         }
 
+        bool is_init() const noexcept {
+            return (!!this->m_symdb_p);
+        }
         void clearerr() noexcept {
             this->m_errno = 0;
         }
         const char *errmsg() const noexcept {
             return kvsymdb_strerror(this->m_errno);
-        }
-        bool is_init() const noexcept {
-            return (!!this->m_symdb_p);
         }
 
         int reserve(uint32_t entc) noexcept {
@@ -182,10 +182,11 @@ namespace cxx_kvsymdb {
             explicit iterator(
                 kvsymdb            *parent_p,
                 kvsymdb_entry_t    *ent_p
-            ) noexcept : m_parent_p(parent_p), m_ent_p(ent_p)
+            ) noexcept
+                : m_parent_p(parent_p), m_ent_p(ent_p)
             {
             }
-            iterator& operator++() noexcept {   // ++it; next(it)
+            iterator &operator++() noexcept {   // ++it; next(it)
                 this->m_ent_p = this->_next();
                 return *this;
             }
@@ -194,10 +195,10 @@ namespace cxx_kvsymdb {
                 this->m_ent_p = this->_next();
                 return ret;
             }
-            bool operator==(const iterator& other_ref) const noexcept { // it1 == it2
+            bool operator==(const iterator  &other_ref) const noexcept { // it1 == it2
                 return (this->m_ent_p == other_ref.m_ent_p);
             }
-            bool operator!=(const iterator& other_ref) const noexcept { // it1 != it2
+            bool operator!=(const iterator &other_ref) const noexcept { // it1 != it2
                 return (this->m_ent_p != other_ref.m_ent_p);
             }
             reference operator*() const noexcept {  // *it; deref(it)
@@ -217,22 +218,22 @@ namespace cxx_kvsymdb {
                 kvsymdb_iterator_end(this->m_symdb_p)
             );
         }
-        iterator next(iterator& it_ref) const noexcept {
+        iterator next(iterator &it_ref) const noexcept {
             return ++it_ref;
         }
-        entry& deref(const iterator& it_ref) const noexcept {
+        entry &deref(const iterator &it_ref) const noexcept {
             return *it_ref;
         }
     };
 }
 
+
+// this needs an errno of its own
 struct cxx_kvsymdb::kvsymdb::reader : private kvsymdb_reader_t { // inherited from c abi struct
 private:
-    kvsymdb    *m_parent_p;
+    int m_errno;
 public:
-    reader(kvsymdb& symdb_ref) noexcept :
-        m_parent_p(&symdb_ref)
-    {
+    reader(kvsymdb &symdb_ref) noexcept : m_errno(0) {
         int rc = kvsymdb_reader_bind(
             this,
             symdb_ref.m_symdb_p,
@@ -241,23 +242,28 @@ public:
         if (rc != KVSYMDB_SUCCESS) {
             this->_symdb_p      = nullptr;
             this->_pos          = 0u;
-            this->m_parent_p    = nullptr;
         }
     }
     ~reader() noexcept {
         kvsymdb_reader_unbind(this);
-        this->m_parent_p = nullptr;
     }
     reader(const reader &other_ref) = delete;
     reader& operator=(const reader &other_ref) = delete;
 
+    void clearerr() noexcept {
+        this->m_errno = 0;
+    }
+    const char *errmsg() const noexcept {
+        return kvsymdb_strerror(this->m_errno);
+    }
 
     bool is_init() const noexcept {
-        return (!!this->m_parent_p);
+        return (!!this->_symdb_p);
     }
     const entry *read() noexcept {
-        return kvsymdb_reader_read(this, &this->m_parent_p->m_errno);
+        return kvsymdb_reader_read(this, &this->m_errno);
     }
+    // lseek
     int rewind() noexcept {
         return kvsymdb_reader_rewind(this);
     }
@@ -269,7 +275,10 @@ struct cxx_kvsymdb::kvsymdb::hash_table {
     struct bucket {
         slot   *chain_head_p;
     };
-
+    struct lookup_result {
+        bucket *bucket_p;
+        slot   *slot_p;
+    };
 private:
     struct pool {
         union entry {
@@ -304,20 +313,32 @@ private:
         };
     };
 
+public:
     const kvsymdb_t    *m_c_symdb_p;    // [0]
     pool                m_pool;         // [1]
     bucket             *m_bucket_arr;   // [2]
     uint32_t            m_bucket_cnt;   // [3]
     int                 m_errno;        // [4]
 
-    void _cleanup() noexcept;
-
-public:
     int _init(
         const kvsymdb_t    *c_symdb_p,
         uint32_t            bucket_cnt,
         uint32_t            slot_cnt
     ) noexcept;
+    void _cleanup() noexcept;
+    int _lookup(
+        const buffer_view  *key_p,
+        uint32_t            key_hash,
+        lookup_result      *out_res_p
+    ) noexcept;
+    int _remove(lookup_result *lu_res_p) noexcept;
+
+    const char *errmsg() const noexcept {
+        return kvsymdb_strerror(this->m_errno);
+    }
+    void clearerr() {
+        this->m_errno = 0;
+    }
 
     bool is_init() const noexcept {
         return (!!this->m_c_symdb_p);
@@ -334,7 +355,17 @@ public:
     }
 
     int insert(const entry *ent_p) noexcept;
-    const entry *lookup(const buffer_view &key_ref, uint32_t hash) noexcept;
+    const entry *lookup(
+        const string_view  &key_ref
+    ) noexcept {
+        lookup_result res{};
+        int rc = this->_lookup(
+            &key_ref,
+            key_ref.hash32(),
+            &res
+        );
+        return (rc == KVSYMDB_FAILED) ? nullptr : res.slot_p->ent_p;
+    }
     int remove(const entry *ent_p) noexcept;
 
     hash_table() noexcept :
