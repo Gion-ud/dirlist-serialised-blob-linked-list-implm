@@ -3,6 +3,10 @@
 #include <new>
 #include <kvsymdb.h>
 
+extern "C" {
+#include <fnv1a_hash.h>
+}
+
 #if defined(_DEBUG) && !defined(_NO_DBG_PRINT)
 #include <stdio.h>
 #define dbg_print(...) \
@@ -59,12 +63,18 @@ namespace _kvsymdb_intrnl {
             ERR_EMPTY,
             ERR_BADIDX,
             ERR_BADOFF,
-            ERR_BADENT, // 1
+            ERR_BADENT,     // 1
             ERR_GC,
             ERR_CREATE,
             ERR_INSERT,
-            ERR_RDEOF, // 2
-            ERR_BADALIGN
+            ERR_RDEOF,      // 2
+            ERR_BADALIGN,
+            ERR_HT_INIT,    // 3
+            ERR_POOL_FULL,  // 4
+            ERR_ADDR_OUT_OF_RANGE,
+            ERR_PTR_UNALIGNED,
+            ERR_POOL_ALLOC,
+            ERR_KEY_NOT_FOUND, // 5
         };
     };
 
@@ -101,6 +111,7 @@ namespace _kvsymdb_intrnl {
         }
     }
 
+
     static inline int reserve(
         kvsymdb_t  *symdb_p,
         int        *out_errno_p,
@@ -128,6 +139,7 @@ namespace _kvsymdb_intrnl {
         const kvsymdb_entry_t  *ent_p,
         kvsymdb_entview_t      *out_entview_p
     );
+    static inline const char *strerror(int db_errno);
 }
 
 extern "C" { // c abi structs; implmtation detail
@@ -301,6 +313,67 @@ _kvsymdb_intrnl::record_size(const kvsymdb_entry_t *ent_p) {
         _kvsymdb_intrnl::align::\
             blob_size_aligned<cxx_kvsymdb::ALIGN_SIZE>(ent_p->data_len);
 }
+
+static inline const char *_kvsymdb_intrnl::strerror(int db_errno) {
+    using namespace error_code;
+
+    switch (db_errno) {
+        case (ERR_OPNEW):
+            return "operator new: out of memory (ERR_OPNEW)";
+        case (ERR_OPNEWARR):
+            return "operator new[]: out of memory (ERR_OPNEWARR)";
+        case (ERR_NULLPTR):
+            return "passing nullptr";
+        case (ERR_BUFVIEW):
+            return "invalid buffer view";
+        case (ERR_BUFFULL):
+            return "arena buffer full";
+        case (ERR_FULL):
+            return "capacity full";
+        case (ERR_RESIZE):
+            return "resize failed";
+        case (ERR_RESIZEBUF):
+            return "resize buffer failed";
+        case (ERR_ENTVIEW):
+            return "invalid entry view";
+        case (ERR_EMPTY):
+            return "capacity empty";
+        case (ERR_BADIDX):
+            return "invalid entry idx";
+        case (ERR_BADOFF):
+            return "invalid offset";
+        case (ERR_BADENT):
+            return "invalid entry";
+        case (ERR_GC):
+            return "compaction failure";
+        case (ERR_CREATE):
+            return "failed to create db";
+        case (ERR_INSERT):
+            return "failed to insert entry";
+        case (ERR_RDEOF):
+            return "arena EOF reached";
+        case (ERR_BADALIGN):
+            return "unaligned offset";
+        case (ERR_HT_INIT):
+            return "hash table init failed";
+        case (ERR_POOL_FULL) :
+            return "pool allocator full";
+        case (ERR_ADDR_OUT_OF_RANGE):
+            return "ptr addr out of valid range";
+        case (ERR_PTR_UNALIGNED):
+            return "unaligned ptr for given type";
+        case (ERR_POOL_ALLOC):
+            return "pool allocation failed";
+        case (ERR_KEY_NOT_FOUND):
+            return "key not found";
+
+        default:
+            break;
+    }
+
+    return "no error";   
+}
+
 
 #define RETURN_FAILED_STAT_WITH_ERRNO(out_errno_p, errno)   \
     do {                                                    \
@@ -928,52 +1001,304 @@ void kvsymdb_reader_unbind(
     }
 }
 
+
 extern "C"
 const char *kvsymdb_strerror(int kvsymdb_errno) {
-    using namespace _kvsymdb_intrnl::error_code;
+    return _kvsymdb_intrnl::strerror(kvsymdb_errno);
+}
 
-    switch (kvsymdb_errno) {
-        case (ERR_OPNEW):
-            return "operator new: out of memory (ERR_OPNEW)";
-        case (ERR_OPNEWARR):
-            return "operator new[]: out of memory (ERR_OPNEWARR)";
-        case (ERR_NULLPTR):
-            return "passing nullptr";
-        case (ERR_BUFVIEW):
-            return "invalid buffer view";
-        case (ERR_BUFFULL):
-            return "arena buffer full";
-        case (ERR_FULL):
-            return "capacity full";
-        case (ERR_RESIZE):
-            return "resize failed";
-        case (ERR_RESIZEBUF):
-            return "resize buffer failed";
-        case (ERR_ENTVIEW):
-            return "invalid entry view";
-        case (ERR_EMPTY):
-            return "capacity empty";
-        case (ERR_BADIDX):
-            return "invalid entry idx";
-        case (ERR_BADOFF):
-            return "invalid offset";
-        case (ERR_BADENT):
-            return "invalid entry";
-        case (ERR_GC):
-            return "compaction failure";
-        case (ERR_CREATE):
-            return "failed to create db";
-        case (ERR_INSERT):
-            return "failed to insert entry";
-        case (ERR_RDEOF):
-            return "arena EOF reached";
-        case (ERR_BADALIGN):
-            return "unaligned offset";
 
-        default:
-            break;
+namespace _hidx_intrnl {
+    
+}
+
+
+// impl of hash table
+// this should be priv ctor
+int cxx_kvsymdb::kvsymdb::hash_table::pool::\
+init(uint32_t pool_size) {
+    assert(pool_size);
+    this->m_errno = _kvsymdb_intrnl::error_code::NOERROR;
+
+    this->m_entry_arr = static_cast<entry*>(
+        operator new[](pool_size * sizeof(entry), std::nothrow)
+    );
+    if (!this->m_entry_arr) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_OPNEWARR;
+        goto failed_ret;
+    }
+    memset(this->m_entry_arr, 0, pool_size * sizeof(entry));
+
+    for (uint32_t i = 0u; i < pool_size - 1; ++i) {
+        this->m_entry_arr[i].next_free_p =
+            reinterpret_cast<decltype(entry::next_free_p)>(
+                &this->m_entry_arr[i + 1]
+            );
+    }
+    this->m_entry_arr[pool_size - 1].next_free_p = nullptr;
+
+    this->m_free_head_p = &this->m_entry_arr[0];
+    this->m_size        = 0u;
+    this->m_capacity    = pool_size;
+
+    return KVSYMDB_SUCCESS;
+failed_ret:
+    return KVSYMDB_FAILED;
+}
+
+void cxx_kvsymdb::kvsymdb::hash_table::pool::_cleanup() {
+    if (this->m_entry_arr)
+        operator delete[](this->m_entry_arr);
+
+    this->m_entry_arr   = nullptr;
+    this->m_free_head_p = nullptr;
+    this->m_size        = 0u;
+    this->m_capacity    = 0u;
+    this->m_errno       = 0;
+}
+
+int cxx_kvsymdb::kvsymdb::hash_table::\
+_init(const kvsymdb_t *symdb_p, uint32_t bucket_cnt, uint32_t slot_cnt) {
+    assert(bucket_cnt && slot_cnt);
+    this->m_c_symdb_p = symdb_p;
+    this->m_errno = _kvsymdb_intrnl::error_code::NOERROR;
+
+    // init pool
+    int rc = this->m_pool.init(slot_cnt);
+    if (rc) goto failed_ret;
+
+    // alloc && init bucket arr
+    this->m_bucket_arr = static_cast<bucket*>(
+        operator new[](bucket_cnt * sizeof(bucket), std::nothrow)
+    );
+    if (!this->m_bucket_arr){
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_OPNEWARR;
+        goto failed_cleanup;
     }
 
-    return "no error";
+    for (uint32_t i = 0u; i < bucket_cnt; ++i) {
+        this->m_bucket_arr[i].chain_head_p = nullptr;
+    }
+    this->m_bucket_cnt = bucket_cnt;
+
+    return KVSYMDB_SUCCESS;
+failed_cleanup:
+    this->_cleanup();   
+failed_ret:
+    return KVSYMDB_FAILED;
+}
+
+void cxx_kvsymdb::kvsymdb::hash_table::_cleanup() {
+    this->m_pool._cleanup();
+    if (this->m_bucket_arr)
+        operator delete[](this->m_bucket_arr);
+
+    this->m_c_symdb_p   = nullptr;
+    this->m_bucket_arr  = nullptr; 
+    this->m_bucket_cnt  = 0u;
+    this->m_errno       = 0;
+}
+
+cxx_kvsymdb::kvsymdb::hash_table::slot *
+cxx_kvsymdb::kvsymdb::hash_table::pool::alloc() {
+    this->m_errno = _kvsymdb_intrnl::error_code::NOERROR;
+    if (this->m_size == this->m_capacity) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_POOL_FULL;
+        return nullptr;
+    }
+
+    assert(this->m_size <= this->m_capacity);
+    assert(this->m_free_head_p);
+
+    slot *slot_p = reinterpret_cast<slot*>(this->m_free_head_p);
+    this->m_free_head_p = reinterpret_cast<entry*>(
+        this->m_free_head_p->next_free_p
+    );
+    ++this->m_size;
+
+    return slot_p;
+}
+
+int cxx_kvsymdb::kvsymdb::hash_table::pool::free(slot *slot_p) {
+    this->m_errno = _kvsymdb_intrnl::error_code::NOERROR;
+    if (!slot_p) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_NULLPTR;
+        return KVSYMDB_FAILED;
+    }
+
+    entry *pool_ent_p = reinterpret_cast<entry*>(slot_p);
+    ptrdiff_t ent_idx = pool_ent_p - this->m_entry_arr;
+    if (
+        ent_idx < 0L ||
+        ent_idx >= static_cast<ptrdiff_t>(this->m_capacity)
+    ) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_ADDR_OUT_OF_RANGE;
+        return KVSYMDB_FAILED;
+    }
+
+    ptrdiff_t ent_off =
+        reinterpret_cast<uint8_t*>(pool_ent_p) - 
+        reinterpret_cast<uint8_t*>(this->m_entry_arr);
+    
+    if (ent_off % sizeof(entry) != 0L) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_PTR_UNALIGNED;
+        return KVSYMDB_FAILED;
+    }
+
+    assert(this->m_size <= this->m_capacity);
+    assert(this->m_size);
+
+    pool_ent_p->next_free_p = reinterpret_cast<slot*>(this->m_free_head_p);
+    this->m_free_head_p = pool_ent_p;
+    --this->m_size;
+
+    return KVSYMDB_SUCCESS;
+}
+
+int cxx_kvsymdb::kvsymdb::hash_table::insert(const entry *ent_p) {
+    this->m_errno = _kvsymdb_intrnl::error_code::NOERROR;
+    if (!ent_p) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_NULLPTR;
+        return KVSYMDB_FAILED;
+    }
+
+    slot *slot_p = this->m_pool.alloc();
+    if (!slot_p) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_POOL_ALLOC;
+        return KVSYMDB_FAILED;
+    }
+
+    slot_p->ent_p       = ent_p;
+    slot_p->prev_slot_p = nullptr;
+    slot_p->next_slot_p = nullptr;    
+
+    uint32_t bucket_idx = ent_p->hash % this->m_bucket_cnt;
+    bucket *bucket_p = &this->m_bucket_arr[bucket_idx];
+
+    slot_p->next_slot_p = bucket_p->chain_head_p;
+    if (bucket_p->chain_head_p)
+        bucket_p->chain_head_p->prev_slot_p = slot_p;
+
+    bucket_p->chain_head_p = slot_p;
+
+    return KVSYMDB_SUCCESS;
+}
+
+const cxx_kvsymdb::kvsymdb::entry *
+cxx_kvsymdb::kvsymdb::hash_table::lookup(
+    const buffer_view  &key_ref,
+    uint32_t            hash
+) {
+    this->m_errno = _kvsymdb_intrnl::error_code::NOERROR;
+    if (!key_ref.data || !key_ref.size) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_ENTVIEW;
+        return nullptr;
+    }
+
+    bucket *bucket_p = &this->m_bucket_arr[hash % this->m_bucket_cnt];
+    slot *slot_p = bucket_p->chain_head_p;
+
+    uint32_t probc = 0u;
+    while (probc < this->m_pool.m_size && slot_p) {
+        const entry *ent_p = slot_p->ent_p;
+        if (ent_p->hash == hash) {
+            entry_view view{};
+            _kvsymdb_intrnl::get_entview(
+                this->m_c_symdb_p,
+                ent_p,
+                &view
+            );
+            if (
+                key_ref.size == view.name_len &&
+                memcmp(key_ref.data, view.name, view.name_len) == 0
+            )
+                return ent_p;
+        }
+        slot_p = slot_p->next_slot_p;
+    }
+
+    assert(!slot_p);
+
+    this->m_errno = _kvsymdb_intrnl::error_code::ERR_KEY_NOT_FOUND;
+    return nullptr;
+}
+
+/*
+int cxx_kvsymdb::kvsymdb::hash_table::remove(const entry *ent_p) {
+    if (
+        !ent_p ||
+        !_kvsymdb_intrnl::is_valid_entry(this->m_c_symdb_p, ent_p)
+    ) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_BADENT;
+        return KVSYMDB_FAILED;
+    }
+
+    entry_view view{};
+    _kvsymdb_intrnl::get_entview(
+        this->m_c_symdb_p,
+        ent_p,
+        &view
+    );
+    buffer_view key{
+        .size = view.name_len,
+        .data = view.name
+    };
+
+    uint32_t hash = fnv_1a_hash32(key.data, key.size);
+    const entry *lookup_ret = this->lookup(&key, hash);
+    if (!lookup_ret) {
+        this->m_errno = _kvsymdb_intrnl::error_code::ERR_KEY_NOT_FOUND;
+        return KVSYMDB_FAILED;
+    }
+
+
+}
+*/
+
+struct _c_kvsymdb_hidx : public cxx_kvsymdb::kvsymdb::hash_table {};
+
+extern "C" kvsymdb_hash_index_t *
+create_kvsymdb_hash_index(
+    const kvsymdb_t    *symdb_p,
+    int                *out_errno_p
+) {
+    if (!out_errno_p) return nullptr;
+    *out_errno_p = _kvsymdb_intrnl::error_code::NOERROR;
+
+    if (!symdb_p)
+        RETURN_SET_ERRNO(
+            out_errno_p,
+            _kvsymdb_intrnl::error_code::ERR_NULLPTR,
+            nullptr
+        );
+
+    _kvsymdb_intrnl::assert_intrnl_state(symdb_p);
+
+    int rc = 0;
+    auto *hidx_p = new (std::nothrow) cxx_kvsymdb::kvsymdb::hash_table();
+    if (!hidx_p) {
+        *out_errno_p = _kvsymdb_intrnl::error_code::ERR_OPNEW;
+        goto failed_ret;
+    }
+
+    rc = hidx_p->_init(symdb_p, symdb_p->_entrycap, symdb_p->_entrycap);
+    if (rc) goto failed_cleanup;
+
+    return static_cast<kvsymdb_hash_index_t*>(hidx_p);
+failed_cleanup:
+    delete hidx_p;
+failed_ret:
+    return nullptr;
+}
+
+extern "C" void
+destroy_kvsymdb_hash_index(
+    kvsymdb_hash_index_t *hidx_p
+) {
+    if (!hidx_p) return;
+    auto *hidx_derived_p =
+        static_cast<cxx_kvsymdb::kvsymdb::hash_table*>(hidx_p);
+
+    delete hidx_derived_p; // dtor automatically called
 }
 

@@ -5,7 +5,6 @@
 #include <memory>
 #include <assert.h>
 #include <stdint.h>
-#include <array>
 #include <fnv1a_hash.h>
 #include <string.h>
 #include <stdio.h>
@@ -105,13 +104,45 @@ namespace kvsymdb_utils {
             entview_r._record
         );
     }
+    inline void iterate_and_print_via_raw_ptr(cxx_kvsymdb::kvsymdb &symdb_ref) {
+        using namespace cxx_kvsymdb;
+        std::cout << 
+            "-- cxx_kvsymdb::kvsymdb: get all entries (via raw buffer) --\n"
+            "(DONT CRASH HERE!!!!!!)\n";
+        { // unsafe; might crash
+            kvsymdb::self_state db_view{};
+            int rc = symdb_ref.get_self_state(&db_view);
+            if (!rc) {
+                uint32_t pos = 0u;
+                while (pos < db_view.buf_len) {
+                    auto ent_p = reinterpret_cast<const kvsymdb::entry*>(db_view.arena_buf + pos);
+                    kvsymdb::entry_view ev{};
+                    int rc = symdb_ref.get_entview(ent_p, &ev);
+                    if (rc) {
+                        std::cerr << "get_entview failed: " << symdb_ref.errmsg() << "\n";
+                        symdb_ref.clearerr();
+                        continue;
+                    }
+                    kvsymdb_utils::print_entry_view(ev);
+                    pos += ent_p->record_len;
+                }
+                assert(pos == db_view.buf_len);
+            } else {
+                std::cerr << "dbp->insert failed: " << symdb_ref.errmsg() << "\n";
+                symdb_ref.clearerr();
+            }
+        }
+        std::cout <<  "(IT DIDNT CRASH!!)\n\n";
+    }
 }
 
 constexpr uint32_t STDIO_BUFSIZE = 8192u;
 
 int main() {
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
+    //std::ios::sync_with_stdio(false);
+    //std::cin.tie(nullptr);
+    //std::cout.tie(nullptr);
+    //std::cerr.tie(nullptr);
     setvbuf(stdout, nullptr, _IOFBF, STDIO_BUFSIZE);
     setvbuf(stderr, nullptr, _IOFBF, STDIO_BUFSIZE);
 
@@ -132,13 +163,8 @@ int main() {
     std::cout << "1. -- insert all entries --\n";
     for (auto i = 0u; i < rectbl_len; ++i) {
         std::cout << "it @ " << i << " \n";
-        kvsymdb_strview key(rectbl[i].name), val(rectbl[i].data);
-        int rc = dbp->insert(
-            std::addressof(key),
-            std::addressof(val),
-            key.hash32(),
-            ENT_TYPE
-        );
+        kvsymdb::string_view key(rectbl[i].name), val(rectbl[i].data);
+        int rc = dbp->insert(key, val, ENT_TYPE);
         if (rc) {
             std::cerr << "dbp->insert failed: " << dbp->errmsg() << "\n";
             dbp->clearerr();
@@ -146,45 +172,14 @@ int main() {
     }
     std::cout << "\n";
 
-    std::cout << 
-        "2. -- get all entries (via raw buffer) --\n"
-        "(DONT CRASH HERE!!!!!!)\n";
-    { // unsafe; might crash
-        kvsymdb::self_state dbv{};
-        int rc = dbp->get_self_state(&dbv);
-        if (!rc) {
-            uint32_t pos = 0u;
-            while (pos < dbv.buf_len) {
-                auto ent_p =
-                    reinterpret_cast<const kvsymdb::entry*>(dbv.arena_buf + pos);
-                kvsymdb::entry_view ev{};
-                int rc = dbp->get_entview(ent_p, &ev);
-                if (rc) {
-                    std::cerr << "get_entview failed: " << dbp->errmsg() << "\n";
-                    dbp->clearerr();
-                    continue;
-                }
-                kvsymdb_utils::print_entry_view(ev);
-                pos += ent_p->record_len;
-            }
-            assert(pos == dbv.buf_len);
-        } else {
-            std::cerr << "dbp->insert failed: " << dbp->errmsg() << "\n";
-            dbp->clearerr();
-        }
-    }
-    std::cout << 
-        "(IT DIDNT CRASH!!)\n\n";
+    kvsymdb_utils::iterate_and_print_via_raw_ptr(*dbp);
 
     std::cout << "2. -- get all entries --\n";
     for (auto it = dbp->begin(); it != dbp->end(); ++it) {
         std::cout << "it\n";
         kvsymdb::entry& ent_ref = *it;
         kvsymdb::entry_view ev{};
-        int rc = dbp->get_entview(
-            std::addressof(ent_ref),
-            std::addressof(ev)
-        );
+        int rc = dbp->get_entview(&ent_ref, &ev);
         if (rc) {
             std::cerr << "get_entview failed: " << dbp->errmsg() << "\n";
             dbp->clearerr();
@@ -198,10 +193,7 @@ int main() {
     for (kvsymdb::entry& ent_ref : *dbp) {
         std::cout << "it\n";
         kvsymdb::entry_view ev{};
-        int rc = dbp->get_entview(
-            std::addressof(ent_ref),
-            std::addressof(ev)
-        );
+        int rc = dbp->get_entview(&ent_ref, &ev);
         if (rc) {
             std::cerr << "get_entview failed: " << dbp->errmsg() << "\n";
             dbp->clearerr();
@@ -232,7 +224,7 @@ int main() {
 
     std::cout << "3. -- unalive all entries logically --\n";
     for (auto& ent_ref : *dbp) {
-        assert(dbp->is_valid_entry(std::addressof(ent_ref)));
+        assert(dbp->is_valid_entry(&ent_ref));
 
         dbg_log_msg("#2");
         int rc = dbp->mark_dead(std::addressof(ent_ref));
@@ -240,7 +232,7 @@ int main() {
         // this is safe because mark_dead does NOT move memory
         // it only toggles state flag
         dbg_log_msg("#3");
-        assert(!dbp->is_valid_entry(std::addressof(ent_ref)));
+        assert(!dbp->is_valid_entry(&ent_ref));
 
         dbg_log_msg("#4");
         if (rc) {
@@ -265,12 +257,12 @@ int main() {
         );
 
         dbg_log_msg("#1");
-        int rc = dbp->mark_dead(std::addressof(ent_ref));
+        int rc = dbp->mark_dead(&ent_ref);
     
         // this is safe because mark_dead does NOT move memory
         // it only toggles state flag
         dbg_log_msg("#2");
-        assert(!dbp->is_valid_entry(std::addressof(ent_ref)));
+        assert(!dbp->is_valid_entry(&ent_ref));
 
         dbg_log_msg("#3");
         if (rc) {
@@ -298,14 +290,11 @@ int main() {
         kvsymdb::entry& ent_ref = dbp->deref(it);
         // this is safe because mark_dead does NOT move memory
         // it only toggles state flag
-        assert(!dbp->is_valid_entry(std::addressof(ent_ref)));
+        assert(!dbp->is_valid_entry(&ent_ref));
         std::cout << 
             "#DEADBEEF entry!!!\n";
         kvsymdb::entry_view ev{};
-        int rc = dbp->get_entview(
-            std::addressof(ent_ref),
-            std::addressof(ev)
-        );
+        int rc = dbp->get_entview(&ent_ref, &ev);
         if (rc) {
             std::cerr << "get_entview failed: " << dbp->errmsg() << "\n";
             dbp->clearerr();
@@ -319,12 +308,7 @@ int main() {
     for (auto i = 0u; i < rectbl_len; ++i) {
         std::cout << "it @ " << i << " \n";
         kvsymdb_strview key(rectbl[rectbl_len - i - 1].name), val(rectbl[rectbl_len - i - 1].data);
-        int rc = dbp->insert(
-            std::addressof(key),
-            std::addressof(val),
-            key.hash32(),
-            ENT_TYPE
-        );
+        int rc = dbp->insert(key, val, ENT_TYPE);
         if (rc) {
             std::cerr << "dbp->insert failed: " << dbp->errmsg() << "\n";
             dbp->clearerr();
@@ -346,10 +330,15 @@ int main() {
     assert(dbp->is_init());
     assert(!db1.is_init());
 
+    // test weird move
+    {
+        kvsymdb db1(std::move(*dbp.get()));
+        *dbp = std::move(db1);
+    }
 
     //dbp.reset(); //it must crash
 
-    std::cout << "6. -- get all DEAD BEEF entries --\n";
+    std::cout << "6. -- get all entries --\n";
     for (auto it = dbp->begin(); it != dbp->end(); it = dbp->next(it)) {
         std::cout << "it\n";
         kvsymdb::entry& ent_ref = dbp->deref(it);
@@ -358,10 +347,7 @@ int main() {
         // assert(!dbp->is_valid_entry(std::addressof(ent_ref)));
         // std::cout << "#DEADBEEF entry!!!\n";
         kvsymdb::entry_view ev{};
-        int rc = dbp->get_entview(
-            std::addressof(ent_ref),
-            std::addressof(ev)
-        );
+        int rc = dbp->get_entview(&ent_ref, &ev);
         if (rc) {
             std::cerr << "get_entview failed: " << dbp->errmsg() << "\n";
             dbp->clearerr();
@@ -403,8 +389,6 @@ int main() {
 
         std::cout << "SCOPE_END\n";
     }
-
-
 
     //dbp->~kvsymdb(); 
     return 0;

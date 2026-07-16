@@ -54,6 +54,20 @@ struct _c_kvsymdb_reader {
     uint32_t            _pos;       // [1]
 };
 
+// newly introduced: hash index table
+
+typedef struct _kvsymdb_hidx_slot kvsymdb_hidx_slot_t;
+struct _kvsymdb_hidx_slot {
+    const kvsymdb_entry_t      *ent_p;          // non owning reference
+    struct _kvsymdb_hidx_slot  *prev_slot_p;    // prev
+    struct _kvsymdb_hidx_slot  *next_slot_p;    // next
+};
+
+typedef struct _c_kvsymdb_hidx kvsymdb_hash_index_t;
+
+
+
+
 extern kvsymdb_t *create_kvsymdb(uint32_t entc, uint32_t bufsize, int *out_errno_p);
 extern void destroy_kvsymdb(kvsymdb_t *symdb_p);
 extern int kvsymdb_get_intrnl_state_view(
