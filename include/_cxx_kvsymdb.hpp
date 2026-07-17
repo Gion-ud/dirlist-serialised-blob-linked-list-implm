@@ -15,7 +15,7 @@ namespace cxx_kvsymdb {
         using entry         = kvsymdb_entry_t;
         using buffer_view   = kvsymdb_bufview_t;
         using self_state    = kvsymdb_state_t;
-        using entry_view    = kvsymdb_entview_t;
+        struct entry_view ;
 
         struct string_view : public kvsymdb_bufview_t {
             string_view() noexcept
@@ -84,7 +84,9 @@ namespace cxx_kvsymdb {
             other_rref.m_errno   = 0;
         }
         kvsymdb& operator=(kvsymdb &&other_rref) noexcept {     // move assignment
-            if (this != &other_rref) this->_cleanup();  // destroy this if is_init to avoid leak
+            if (this == &other_rref) return *this;
+
+            this->_cleanup();  // destroy this if is_init to avoid leak
 
             this->m_symdb_p      = other_rref.m_symdb_p;
             this->m_errno        = other_rref.m_errno;
@@ -224,6 +226,38 @@ namespace cxx_kvsymdb {
         entry &deref(const iterator &it_ref) const noexcept {
             return *it_ref;
         }
+
+        struct entry_view : public kvsymdb_entview_t {
+        private:
+            kvsymdb            *m_parent_symdb_p;
+        public:
+            entry_view() noexcept :
+                m_parent_symdb_p(nullptr)
+            {
+            }
+            entry_view(
+                kvsymdb        &symdb_ref,
+                const entry    &ent_ref
+            ) noexcept :
+                m_parent_symdb_p(&symdb_ref)
+            {
+                this->from_entry(symdb_ref, ent_ref);
+            }
+
+            int from_entry(
+                kvsymdb        &symdb_ref,
+                const entry    &ent_ref
+            ) noexcept {
+                int rc = symdb_ref.get_entview(&ent_ref, this);
+                if (!rc) this->m_parent_symdb_p = &symdb_ref;
+                return rc;
+            }
+
+            bool is_init() const noexcept {
+                return (!!this->m_parent_symdb_p);
+            }
+        };
+
     };
 }
 
@@ -268,6 +302,7 @@ public:
         return kvsymdb_reader_rewind(this);
     }
 };
+
 
 
 struct cxx_kvsymdb::kvsymdb::hash_table {

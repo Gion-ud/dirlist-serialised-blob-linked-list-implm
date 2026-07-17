@@ -1,6 +1,5 @@
 #all: keylist.o tskl
-all: build/kvsymdb.o  bin/symdb
-# bin/tssym
+all: build/kvsymdb.o  bin/symdb bin/tssym
 
 _C_CXX_FLAGS = -O2 -Wall -Wextra -fno-exceptions \
 	-fno-strict-aliasing -D_DEBUG #-DNDEBUG -g
@@ -31,7 +30,7 @@ bin/tssym: build/kvsymdb.o tests/tssym.cxx | bin
 	export PATH="$$PATH:$$(pwd)/bin"
 
 bin/symdb: build/kvsymdb.o tests/symdb.c | bin
-	cc $^ -o $@ -Iinclude -Llib -lstdc++ -lgcc -lgcc_s
+	cc $^ -o $@ $(CFLAGS) -Iinclude -Llib -lstdc++ -lgcc -lgcc_s
 	export PATH="$$PATH:$$(pwd)/bin"
 
 clean:
