@@ -225,6 +225,8 @@ int main() {
             assert(ev1.is_init());
             assert(&ent_ref == ent_p);
 
+            std::cout << "\tval='%.*s'\n";
+
             printf(
                 "\tval='%.*s'\n",
                 static_cast<int>(ev1.data_len),
