@@ -38,5 +38,30 @@
    "-Iinclude"
   ],
   "file": "src/vector.c"
+ },
+ {
+  "directory": "C:\\John_Wood\\Coding_Projects\\c\\dirlist",
+  "arguments": [
+   "cc",
+   "-x",
+   "c++",
+   "src/linked_list.cxx",
+   "-o",
+   "bin/list",
+   "-O2",
+   "-Wall",
+   "-Wextra",
+   "-fno-exceptions",
+   "-fno-strict-aliasing",
+   "-D_DEBUG",
+   "-std=c++11",
+   "-fno-rtti",
+   "-Iinclude",
+   "-Llib",
+   "-lstdc++",
+   "-lgcc",
+   "-lgcc_s"
+  ],
+  "file": "src/linked_list.cxx"
  }
 ]

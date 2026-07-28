@@ -183,6 +183,32 @@ enum kvsymdb_return_code {
     KVSYMDB_FAILED  = -1,
 };
 
+typedef struct _c_kvsymdb_file_header {
+    uint32_t    fh_magic;   // [0]
+    uint16_t    fh_version; // [1]
+    uint16_t    fh_align;   // [2]
+    uint32_t    fh_entcnt;  // [3]
+    uint32_t    fh_buflen;  // [4]
+    uint32_t    fh_crc32;   // [5]
+    uint8_t     fh_data[];  // [6]
+} kvsymdb_file_header_t;
+
+#include <stdio.h>
+typedef struct _c_kvsymdb_file_reader {
+    int                 fileno;
+    kvsymdb_bufview_t   view;
+} kvsymdb_file_reader_t;
+
+/*
+typedef struct _c_kvsymdb_file_builder {
+    uint8_t    *file_buf;
+    uint32_t    file_size;
+} kvsymdb_file_builder_t;
+*/
+
+// questionable api
+kvsymdb_t *create_kvsymdb_file_reader(const char *filename, int *out_errno_p);
+
 
 #ifdef __cplusplus
 }

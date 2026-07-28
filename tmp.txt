@@ -50,4 +50,58 @@ Type obj1(std::move(obj));
 auto obj2 = std::move(obj1);
 
 
+// perfect language syntax
+
+import std.print
+import std.vector
+
+class Point {
+public:
+    int m_x;
+    int m_y;
+
+    Point(int x, y) {
+        this.m_x = x;
+        this.m_y = y;
+    }
+
+    void print() {
+        std.println("{}, {}", x, y);
+    }
+
+    void add(int dx, int dy) {
+        this.m_x += dx;
+        this.m_y += dy;
+    }
+
+    
+
+    ~Point() {
+        this.m_x = 0;
+        this.m_y = 0;
+    }
+};
+
+Point add_points(Point p1, Point p2) {
+    Point p = new Point(p1.m_x, p1.m_y);
+    p.add(p2.m_x, p2.m_y);
+}
+
+int main() {
+    Point p = new Point(2, 3);
+
+    p.print();
+    p.add(3, 4);
+    p.print();
+
+    std.vector<int> v = new vector();
+    v.push(1);
+    v.push(2);
+
+
+
+
+    // v, p automatically freed
+    return 0;
+}
 

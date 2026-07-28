@@ -1,5 +1,6 @@
 #all: keylist.o tskl
 all: build/kvsymdb.o  bin/symdb bin/tssym
+#all: bin/list add_bin_path
 
 _C_CXX_FLAGS = -O2 -Wall -Wextra -fno-exceptions \
 	-fno-strict-aliasing -D_DEBUG #-DNDEBUG -g
@@ -23,14 +24,18 @@ tspool: tests/tspool.c src/vector.c src/pool_alloc.c | build
 
 
 build/kvsymdb.o: src/kvsymdb.cxx | build
-	cc -c $< -o $@ $(CXXFLAGS) -Iinclude
+	cc -c $< -o $@ $(CXXFLAGS) -Iinclude -Isrc
 
 bin/tssym: build/kvsymdb.o tests/tssym.cxx | bin
-	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Llib -lstdc++ -lgcc -lgcc_s
-	export PATH="$$PATH:$$(pwd)/bin"
+	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman
 
 bin/symdb: build/kvsymdb.o tests/symdb.c | bin
-	cc $^ -o $@ $(CFLAGS) -Iinclude -Llib -lstdc++ -lgcc -lgcc_s
+	cc $^ -o $@ $(CFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman
+
+bin/list: src/linked_list.cxx | bin
+	cc -x c++ $^ -o $@ $(CXXFLAGS) -Iinclude -Llib -lstdc++ -lgcc -lgcc_s
+
+add_bin_path:
 	export PATH="$$PATH:$$(pwd)/bin"
 
 clean:
