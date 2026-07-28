@@ -1,0 +1,5 @@
+-Iinclude
+-std=c11
+-std=c++11
+--target=x86_64-w64-windows-gnu
+-Isrc

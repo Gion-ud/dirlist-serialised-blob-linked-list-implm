@@ -1,0 +1,26 @@
+CompileFlags:
+    Compiler: C:/John_Wood/DevTools/w64devkit/bin/gcc.exe
+    Add:
+        #- -std=c++11
+        #- -std=c11
+        - -Wall
+        - -Wextra
+        - -fno-exceptions
+        - -fno-rtti
+        - -fno-strict-aliasing
+        - -Iinclude
+        - -Isrc
+        - -IC:/John_Wood/DevTools/w64devkit/include
+        - -IC:/John_Wood/DevTools/w64devkit/lib/gcc/x86_64-w64-mingw32/15.2.0/include
+        - -IC:/John_Wood/DevTools/w64devkit/lib/gcc/x86_64-w64-mingw32/15.2.0/include/c++
+        - -Llib
+        - -lstdc++
+        - -lgcc
+        - -lgcc_s
+        - -D_DEBUG
+        - --target=x86_64-w64-windows-gnu
+        #- -x c++
+
+Completion:
+    HeaderInsertion: Never
+
