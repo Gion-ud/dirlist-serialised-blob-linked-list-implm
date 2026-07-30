@@ -1,429 +1,50 @@
-<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line862> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line862> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line862> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line209> #0
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line862> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<main@file 'tests/tssym.cxx' line229> #2
-<main@file 'tests/tssym.cxx' line234> #3
-<main@file 'tests/tssym.cxx' line237> #4
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line862> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<main@file 'tests/tssym.cxx' line259> #1
-<main@file 'tests/tssym.cxx' line264> #2
-<main@file 'tests/tssym.cxx' line267> #3
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line862> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-symdb_p->_buf_size: 1024; new_bufsize: 2048
-<kvsymdb_iterator_begin@file 'src/kvsymdb.cxx' line862> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_iterator_next@file 'src/kvsymdb.cxx' line883> 
-<kvsymdb_iterator_end@file 'src/kvsymdb.cxx' line871> 
-<kvsymdb_reader_bind@file 'src/kvsymdb.cxx' line912> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_rewind@file 'src/kvsymdb.cxx' line1003> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line971> #4
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line977> #5
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line932> 
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line936> #1
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line944> #2
-<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line958> #3
-<kvsymdb_reader_unbind@file 'src/kvsymdb.cxx' line1020> 
+symdb_p->_buf_size: 32; new_bufsize: 96
+symdb_p->_buf_size: 96; new_bufsize: 192
+symdb_p->_buf_size: 192; new_bufsize: 384
+symdb_p->_buf_size: 384; new_bufsize: 768
+symdb_p->_buf_size: 768; new_bufsize: 1536
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+[DeadEntry]
+<kvsymdb_reader_bind@file 'src/kvsymdb.cxx' line512> 
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_read@file 'src/kvsymdb.cxx' line566> #5
+<kvsymdb_reader_unbind@file 'src/kvsymdb.cxx' line608> 
+[DEBUG] END OF SCOPE

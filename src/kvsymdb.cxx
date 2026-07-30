@@ -203,8 +203,7 @@ extern "C" int kvsymdb_compact(
             );
             continue;
         }
-        _intrnl::get_entview(
-            old_symdb_p,
+        _intrnl::get_entry_view(
             it,
             &entview
         );
@@ -403,7 +402,34 @@ extern "C" int kvsymdb_get_entview(
 
     _intrnl::assert_intrnl_state(symdb_p);
 
-    _intrnl::get_entview(symdb_p, ent_p, out_entview_p);
+    _intrnl::get_entry_view(ent_p, out_entview_p);
+
+    return KVSYMDB_SUCCESS;
+}
+
+extern "C" int kvsymdb_entry_to_view(
+    const kvsymdb_bufview_t    *arena_view_p,
+    uint32_t                    entc,
+    const kvsymdb_entry_t      *ent_p,
+    kvsymdb_entview_t          *out_entview_p,
+    int                        *out_errno_p
+) {
+    if (!out_errno_p) return KVSYMDB_FAILED;
+    *out_errno_p = _intrnl::error_code::NOERROR;
+
+    if (!ent_p || !out_entview_p)
+        RETURN_FAILED_STAT_WITH_ERRNO(
+            out_errno_p,
+            _intrnl::error_code::ERR_NULLPTR
+        );
+
+    if (!_intrnl::is_valid_entry(arena_view_p, entc, ent_p))
+        RETURN_FAILED_STAT_WITH_ERRNO(
+            out_errno_p,
+            _intrnl::error_code::ERR_BADENT
+        );
+
+    _intrnl::get_entry_view(ent_p, out_entview_p);
 
     return KVSYMDB_SUCCESS;
 }
@@ -504,26 +530,98 @@ kvsymdb_iterator_t kvsymdb_iterator_next(
 // init
 extern "C"
 int kvsymdb_reader_bind(
-    kvsymdb_reader_t   *reader_p,
-    const kvsymdb_t    *symdb_p,
-    int                *out_errno_p
+    kvsymdb_reader_t           *reader_p,
+    const kvsymdb_bufview_t    *arena_view_p,
+    uint32_t                    entry_count,
+    int                        *out_errno_p
 ) {
     // kvsymdb_t verification required
     dbg_log_msg("");
     if (!out_errno_p) return KVSYMDB_FAILED;
     *out_errno_p = _intrnl::error_code::NOERROR;
-    if (!reader_p || !symdb_p)
+    if (!reader_p || !arena_view_p || !arena_view_p->data)
         RETURN_FAILED_STAT_WITH_ERRNO(
             out_errno_p,
             _intrnl::error_code::ERR_NULLPTR
         );
 
-    reader_p->_symdb_p  = symdb_p;
-    reader_p->_pos      = 0u;
+    reader_p->_arena_view.data  = arena_view_p->data;
+    reader_p->_arena_view.size  = arena_view_p->size;
+    reader_p->_entc = entry_count; 
+    reader_p->_pos  = 0u;
+
 
     return KVSYMDB_SUCCESS;
 }
 
+const kvsymdb_entry_t *kvsymdb_reader_read(
+    kvsymdb_reader_t   *reader_p,
+    int                *out_errno_p
+) {
+    // kvsymdb_t verification required
+    if (!out_errno_p) return nullptr;
+    *out_errno_p = _intrnl::error_code::NOERROR;
+
+    const kvsymdb_entry_t *ent_p = nullptr;
+    uint32_t min_reclen{};
+
+    if (!reader_p || !reader_p->_arena_view.data) {
+        *out_errno_p = _intrnl::error_code::ERR_NULLPTR;
+        goto failed;
+    }
+
+    // check alignment
+    if (
+        reader_p->_pos &&
+        !align_utils::align_off<uint32_t, kvsymdb::ALIGN_SIZE>(reader_p->_pos)
+    ) {
+        *out_errno_p = _intrnl::error_code::ERR_BADALIGN;
+        goto failed;
+    }
+
+    // checking is _pos + min_reclen <= than buf_len so 
+    // the rec header is safe for deref (not guaranteed for payload yet)
+    min_reclen = sizeof(kvsymdb_record_header_t);
+    if (reader_p->_pos + min_reclen > reader_p->_arena_view.size) {
+        reader_p->_pos = reader_p->_arena_view.size; // EOF
+        *out_errno_p = _intrnl::error_code::ERR_RDEOF;
+        goto failed;
+    }
+
+    ent_p = reinterpret_cast<const kvsymdb_entry_t*>(
+        static_cast<const uint8_t*>(reader_p->_arena_view.data) + reader_p->_pos
+    );
+
+    dbg_log_msg("#5");
+    if (
+        !_intrnl::is_valid_entry(
+            &reader_p->_arena_view,
+            reader_p->_entc,
+            ent_p
+        )
+    ) {
+        // It is usually bc _pos + sizeof(header) >= buf_len
+        // so (Header*)((byte*)base + _pos) is safe to deref
+        // but _pos + header.rec_len_aligned > buf_len
+        // i.e. The payload is out of bound / truncated
+        // to be safe we set _pos to _buf_len (guaranteed EOF)
+
+    
+        reader_p->_pos = reader_p->_arena_view.size;
+        *out_errno_p = _intrnl::error_code::ERR_BADENT;
+        goto failed;
+    }
+   
+    reader_p->_pos += ent_p->record_len;    
+    assert(reader_p->_pos <= reader_p->_arena_view.size);
+
+    return ent_p;
+failed:
+    return nullptr;
+}
+
+
+/*
 const kvsymdb_entry_t *kvsymdb_reader_read(
     kvsymdb_reader_t   *reader_p,
     int                *out_errno_p
@@ -584,16 +682,14 @@ const kvsymdb_entry_t *kvsymdb_reader_read(
 failed:
     return nullptr;
 }
+*/
 
 int kvsymdb_reader_rewind(
     kvsymdb_reader_t   *reader_p
 ) {
     dbg_log_msg("");
-    if (!reader_p || !reader_p->_symdb_p)
-        return KVSYMDB_FAILED;
-
+    if (!reader_p) return KVSYMDB_FAILED;
     reader_p->_pos = 0u;
-
     return KVSYMDB_SUCCESS;
 }
 
@@ -605,10 +701,11 @@ extern "C"
 void kvsymdb_reader_unbind(
     kvsymdb_reader_t   *reader_p
 ) {
-    dbg_log_msg("");
     if (reader_p) {
-        reader_p->_symdb_p  = nullptr;
-        reader_p->_pos      = 0u;
+        reader_p->_arena_view.data = nullptr;
+        reader_p->_arena_view.size = 0UL;
+        reader_p->_entc = 0u;
+        reader_p->_pos  = 0u;
     }
 }
 
@@ -620,8 +717,8 @@ const char *kvsymdb_strerror(int kvsymdb_errno) {
 
 
 int kvsymdb::hash_index::init(
-    kvsymdb    &symdb_ref,
-    uint32_t    capacity
+    const kvsymdb  &symdb_ref,
+    uint32_t        capacity
 ) {
     return this->m_base.init(
         symdb_ref.m_symdb_p,
@@ -666,7 +763,7 @@ int kvsymdb::hash_index::remove(const entry *ent_p) {
     }
 
     entry_view ent_view{};
-    _intrnl::get_entview(this->m_base.m_c_symdb_p, ent_p, &ent_view);
+    _intrnl::get_entry_view(ent_p, &ent_view);
 
     string_view key_view(ent_view.name, ent_view.name_len);
     lookup_result lu_res{};
@@ -797,7 +894,23 @@ struct CXX_FILE {
 private:
     FILE   *m_fp;
 public:
+    inline CXX_FILE() noexcept : m_fp(nullptr) {
+    }
     inline CXX_FILE(FILE *fp) noexcept : m_fp(fp) {
+    }
+
+    CXX_FILE(const CXX_FILE &other_ref) = delete;
+    CXX_FILE &operator=(const CXX_FILE &other_ref) = delete;
+
+    inline ~CXX_FILE() noexcept {
+        if (this->m_fp) {
+            fclose(this->m_fp);
+            this->m_fp = nullptr;
+        }
+    }
+
+    inline bool is_open() noexcept {
+        return (!!this->m_fp);
     }
 
     inline FILE *get() noexcept {
@@ -809,11 +922,48 @@ public:
         return ::fileno(this->get());
     }
 
-    inline ~CXX_FILE() noexcept {
-        if (this->m_fp) {
-            fclose(this->m_fp);
-            this->m_fp = nullptr;
+    inline CXX_FILE &operator=(FILE *fp) noexcept {
+        if (this->is_open()) this->~CXX_FILE();
+        return *::new (this) CXX_FILE(fp);
+    }
+};
+
+constexpr int INVALID_FILENO = -1;
+struct FileDescHandle {
+private:
+    int m_fileno;
+
+public:
+    inline FileDescHandle() noexcept : m_fileno(INVALID_FILENO) {
+    }
+    inline FileDescHandle(int fd) noexcept : m_fileno(fd) {
+    }
+    FileDescHandle(const FileDescHandle &other_ref) = delete;
+    FileDescHandle &operator=(const FileDescHandle &other_ref) = delete;
+
+    inline bool is_valid() const noexcept {
+        return (this->m_fileno != INVALID_FILENO);
+    }
+
+    inline int get() noexcept {
+        return this->m_fileno;
+    }
+
+    inline void move_out(int *out_fd_p) noexcept {
+        *out_fd_p       = this->m_fileno;
+        this->m_fileno  = INVALID_FILENO;
+    }
+
+    inline ~FileDescHandle() noexcept {
+        if (this->m_fileno != INVALID_FILENO) {
+            close(this->m_fileno);
+            this->m_fileno = INVALID_FILENO;
         }
+    }
+
+    FileDescHandle &operator=(int fd) noexcept {
+        if (this->is_valid()) this->~FileDescHandle();
+        return *::new (this) FileDescHandle(fd);
     }
 };
 
@@ -821,27 +971,40 @@ struct MMapHandle {
 private:
     void   *m_base;
     size_t  m_size;
-
 public: 
     inline MMapHandle(void *buf_base, size_t buf_size) noexcept :
         m_base(buf_base), m_size(buf_size)
     {
     }
 
-    bool is_good() {
-        return this->m_base != MAP_FAILED;
+    MMapHandle(const MMapHandle &other_ref) = delete;
+    MMapHandle &operator=(const MMapHandle &other_ref) = delete;
+
+    inline bool is_good() {
+        return (this->m_base != MAP_FAILED && this->m_base);
     }
 
-    size_t length() const noexcept {
+    inline size_t length() const noexcept {
         return this->m_size;
     }
 
-    void *data() const noexcept {
+    inline void *data() const noexcept {
         return this->m_base;
     }
 
-    ~MMapHandle() noexcept {
-        ::munmap(this->m_base, this->m_size);
+    inline void move_out(void **out_buf_p, size_t *out_size_p) noexcept {
+        *out_buf_p      = this->m_base;
+        *out_size_p     = this->m_size; 
+        this->m_base    = nullptr;
+        this->m_size    = 0UL;
+    }
+
+    inline ~MMapHandle() noexcept {
+        if (this->m_base != MAP_FAILED && this->m_base) {
+            ::munmap(this->m_base, this->m_size);
+            this->m_base = nullptr;
+            this->m_size = 0UL;
+        }
     }
 };
 
@@ -913,6 +1076,111 @@ int kvsymdb::file_builder::dump(const char *filename) {
     return KVSYMDB_SUCCESS;
 }
 
+
+extern "C"
+kvsymdb_file_reader_t *
+kvsymdb_file_reader_init(
+    void       *_obj_mem,
+    const char *filename,
+    int        *out_errno_p
+) {
+    if (!out_errno_p) return nullptr;
+    *out_errno_p = _intrnl::error_code::NOERROR;
+
+    if (!_obj_mem || !filename) {
+        *out_errno_p = _intrnl::error_code::ERR_NULLPTR;
+        return nullptr;
+    }
+
+    auto *reader_p = static_cast<kvsymdb_file_reader_t*>(_obj_mem);
+
+    CXX_FILE dbif(fopen(filename, "rb"));
+    if (!dbif.is_open()) {
+        dbg_log_msg("");
+        fprintf(stderr, "fopen failed: %s\n", ::strerror(errno));
+        *out_errno_p = _intrnl::error_code::ERR_FOPEN;
+        return nullptr;
+    }
+
+    FileDescHandle fd(dup(dbif.fileno()));
+    if (!fd.is_valid()) {
+        dbg_log_msg("");
+        fprintf(stderr, "dup failed: %s\n", ::strerror(errno));
+        *out_errno_p = _intrnl::error_code::ERR_DUP;
+        return nullptr;
+    }
+
+    struct ::stat st{};
+    if (::fstat(fd.get(), &st) < 0) {
+        dbg_log_msg("");
+        fprintf(stderr, "fstat failed: %s\n", ::strerror(errno));
+        *out_errno_p = _intrnl::error_code::ERR_FSTAT;
+        return nullptr;
+    }
+
+    size_t filesize = st.st_size;
+
+    MMapHandle dbif_map(
+        mmap(
+            nullptr,
+            filesize,
+            PROT_READ,
+            MAP_SHARED | MAP_FILE,
+            fd.get(),
+            0L
+        ),
+        filesize
+    );
+
+    if (!dbif_map.is_good()) {
+        dbg_log_msg("");
+        fprintf(stderr, "mmap failed: %s\n", ::strerror(errno));
+        *out_errno_p = _intrnl::error_code::ERR_MMAP;
+        return nullptr;
+    }
+
+    auto *hdr_p =
+        static_cast<const kvsymdb::file_header*>(dbif_map.data());
+
+    if (!_intrnl::is_valid_file_header(hdr_p, filesize)) {
+        *out_errno_p = _intrnl::error_code::ERR_BADFHDR;
+        return nullptr;
+    }
+
+    auto arena_buf = reinterpret_cast<const uint8_t*>(hdr_p + 1);
+
+    auto calc_crc32 = [](const void *buf, uint32_t buf_len) {
+        return static_cast<uint32_t>(
+            ::crc32(0UL, static_cast<const uint8_t*>(buf), buf_len)
+        );
+    };
+
+    if (calc_crc32(arena_buf, hdr_p->fh_buflen) != hdr_p->fh_crc32) {
+        *out_errno_p = _intrnl::error_code::ERR_CRC;
+        return nullptr;
+    }
+
+    fd.move_out(&reader_p->_fileno);
+    dbif_map.move_out(&reader_p->_base, &reader_p->_size);    
+
+    return reader_p;
+}
+
+extern "C"
+void kvsymdb_file_reader_cleanup(
+    kvsymdb_file_reader_t  *reader_p
+) {
+    if (!reader_p) return;
+
+    (void)FileDescHandle(reader_p->_fileno);
+    (void)MMapHandle(reader_p->_base, reader_p->_size);
+
+    reader_p->_fileno   = INVALID_FILENO;
+    reader_p->_base     = nullptr;
+    reader_p->_size     = 0UL;
+}
+
+/*
 // temporary solution
 extern "C" kvsymdb_t *
 create_kvsymdb_file_reader(const char *filename, int *out_errno_p) {
@@ -1020,3 +1288,6 @@ failed:
 failed_ret:
     return nullptr;
 }
+
+*/
+

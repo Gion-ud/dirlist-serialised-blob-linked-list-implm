@@ -102,7 +102,8 @@ namespace error_code {
         ERR_BADDBF,
         ERR_MMAP,
         ERR_BADFHDR,
-        ERR_CRC
+        ERR_CRC,
+        ERR_DUP,
     };
 }; // namespace error_code
 
@@ -178,6 +179,8 @@ inline const char *strerror(int db_errno) {
             return "bad file header";
         case (ERR_CRC):
             return "crc mismatch";
+        case (ERR_DUP):
+            return "dup failed";
 
         default:
             break;
@@ -255,31 +258,61 @@ inline uint32_t record_size(const kvsymdb_entry_t *ent_p) {
         align::blob_size_aligned<kvsymdb::ALIGN_SIZE>(ent_p->data_len);
 }
 
+inline bool _is_valid_entry(
+    const void             *arena_buf,
+    uint32_t                arena_buf_len, 
+    uint32_t                entc,
+    const kvsymdb_entry_t  *ent_p
+) {
+    using namespace align_utils;
+
+    assert(arena_buf && ent_p);
+    auto record_len = record_size(ent_p);
+
+    auto record_begin   = reinterpret_cast<const uint8_t*>(ent_p);
+    auto record_end     = reinterpret_cast<const uint8_t*>(ent_p) + record_len;
+    auto arena_begin    = static_cast<const uint8_t*>(arena_buf);
+    auto arena_end      = static_cast<const uint8_t*>(arena_buf) + arena_buf_len;
+
+    return (
+        ent_p &&
+        record_begin >= arena_begin &&
+        record_end <= arena_end &&
+        is_aligned_off<uint32_t, kvsymdb::ALIGN_SIZE>(record_begin - arena_begin) &&
+        ent_p->id < entc &&
+        record_len == ent_p->record_len
+    );
+}
+
 inline bool is_valid_entry(
     const kvsymdb_t        *symdb_p,
     const kvsymdb_entry_t  *ent_p
 ) {
     assert(symdb_p && ent_p);
-    auto entry_size = record_size(ent_p);
-
-    auto record_begin = 
-        reinterpret_cast<const uint8_t*>(ent_p);
-
-    auto record_end =
-        reinterpret_cast<const uint8_t*>(ent_p) + entry_size;
-
-    auto arenabuf_begin = symdb_p->_arena_buf;
-    auto arenabuf_end = symdb_p->_arena_buf + symdb_p->_buf_len;
-
-    return (
-        ent_p &&
-        record_begin >= arenabuf_begin &&
-        record_end <= arenabuf_end &&
-        ent_p->id < symdb_p->_entrycnt &&
-        entry_size == ent_p->record_len &&
-        align_utils::is_aligned_off<uint32_t, kvsymdb::ALIGN_SIZE>(ent_p->record_len)
+    
+    return _is_valid_entry(
+        symdb_p->_arena_buf,
+        symdb_p->_buf_len,
+        symdb_p->_entrycnt,
+        ent_p
     );
 }
+
+inline bool is_valid_entry(
+    const kvsymdb_bufview_t    *arena_view_p,
+    uint32_t                    entc,
+    const kvsymdb_entry_t      *ent_p
+) {
+    assert(arena_view_p && ent_p);
+
+    return _is_valid_entry(
+        arena_view_p->data,
+        arena_view_p->size,
+        entc,
+        ent_p
+    );
+}
+
 
 inline int reserve(
     kvsymdb_t  *symdb_p,
@@ -360,12 +393,11 @@ failed_ret:
     return KVSYMDB_FAILED;
 }
 
-inline void get_entview(
-    const kvsymdb_t        *symdb_p,
+
+inline void get_entry_view(
     const kvsymdb_entry_t  *ent_p,
     kvsymdb_entview_t      *out_entview_p
 ) {
-    assert(symdb_p);
     assert(ent_p);
     assert(out_entview_p);
 
@@ -383,6 +415,7 @@ inline void get_entview(
     out_entview_p->data_len = ent_p->data_len;
     out_entview_p->_record  = static_cast<const void*>(ent_p);
 }
+
 
 inline bool is_valid_file_header(
     const kvsymdb_file_header_t    *fhdr_p,
@@ -600,8 +633,7 @@ inline int hash_index::lookup(
         const kvsymdb::entry *ent_p = slot_p->ent_p;
         if (ent_p->hash == hash) {
             kvsymdb::entry_view view{};
-            get_entview(
-                this->m_c_symdb_p,
+            get_entry_view(
                 ent_p,
                 &view
             );

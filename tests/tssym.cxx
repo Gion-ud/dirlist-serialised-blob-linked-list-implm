@@ -42,7 +42,8 @@ namespace cxx_class_utils {
 
 
 namespace kvsymdb_utils {
-    inline void print_entry_view(cxx_kvsymdb::kvsymdb::entry_view &entview_r) {
+    using namespace cxx_kvsymdb;
+    inline void print_entry_view(kvsymdb::entry_view &entview_r) {
         printf(
             "{\n"
             "\tid=%u,\n"
@@ -63,7 +64,7 @@ namespace kvsymdb_utils {
             entview_r._record
         );
     }
-    inline void print_ent_kv(cxx_kvsymdb::kvsymdb::entry_view &entview_r) {
+    inline void print_ent_kv(kvsymdb::entry_view &entview_r) {
         printf(
             "[%u] (0x%.8X, '%.*s', '%.*s')\n",
             entview_r.id,
@@ -72,6 +73,15 @@ namespace kvsymdb_utils {
             static_cast<const char*>(entview_r.name),
             static_cast<int>(entview_r.data_len),
             static_cast<const char*>(entview_r.data)
+        );
+    }
+    inline std::ostream &operator<<(
+        std::ostream               &of_ref,
+        const kvsymdb::buffer_view &str_view_ref
+    ) {
+        return of_ref.write(
+            static_cast<const char*>(str_view_ref.data),
+            str_view_ref.size
         );
     }
 }
@@ -155,6 +165,8 @@ const auto rectbl = array_utils::c_array::make_std_array(_rectbl_c_arr);
 
 constexpr uint32_t STDIO_BUFSIZE = 8192u;
 
+#include <vector>
+
 int main() {
     //std::ios::sync_with_stdio(false);
     //std::cin.tie(nullptr);
@@ -166,6 +178,7 @@ int main() {
     using namespace cxx_kvsymdb;
     using namespace cxx_class_utils;
     using namespace string_utils;
+    using kvsymdb_utils::operator<<;
 
     memory::buffer<kvsymdb> _db_buf{};
     std::unique_ptr<kvsymdb, memory::cleanup<kvsymdb>>
@@ -219,7 +232,6 @@ int main() {
         std::cerr << "dbp->compact: " << dbp->errmsg() << "\n";
         dbp->clearerr();
     }
-
 
     for (const auto &kv_ref : rectbl) {
         kvsymdb::string_view key(kv_ref.name), val(kv_ref.data);
@@ -340,9 +352,17 @@ int main() {
     {
         kvsymdb::file_reader dbf("data.bin");
         if (dbf.is_init()) {
-            auto reader = dbf.make_reader();
-            const kvsymdb::entry *ep = nullptr;
+            kvsymdb::reader reader(dbf);
+            assert(reader.is_init());
+            std::cout << "after reader init" << std::endl;
 
+            auto *fhdr_p = dbf.get_file_header();
+
+            uint32_t entc = fhdr_p->fh_entcnt;
+            std::vector<const kvsymdb::entry*> ent_p_vec{};
+            ent_p_vec.reserve(entc);
+    
+            const kvsymdb::entry *ep = nullptr;
             while ((ep = reader.read()) != nullptr) {
                 kvsymdb::entry_view ev{};
                 int rc = dbf.get_entry_view(ep, &ev);
@@ -352,7 +372,47 @@ int main() {
                     break;
                 }
                 kvsymdb_utils::print_ent_kv(ev);
+                ent_p_vec.push_back(ep);
             }
+            reader.rewind();
+
+            std::cout << std::endl;
+/*
+            {
+                kvsymdb::hash_index hidx{};
+                if (hidx.init(dbf.base(), dbf.entc()) == KVSYMDB_SUCCESS) {
+                    for (auto &ent_p_ref : ent_p_vec) {
+                        if (hidx.insert(ent_p_ref)) {
+                            std::cerr << "hidx.insert: " << hidx.errmsg() << std::endl;
+                            hidx.clearerr();
+                        }
+                    }
+
+                    for (auto &ent_p_ref : ent_p_vec) {
+                        kvsymdb::entry_view ev(dbf.base(), *ent_p_ref);
+                        assert(ev.is_init());
+
+                        auto key = kvsymdb::string_view(ev.name, ev.name_len);
+
+                        auto ent_p = hidx[key];
+                        assert(ent_p);
+                        
+                        kvsymdb::entry_view ev1(dbf.base(), *ent_p);
+
+                        auto val = kvsymdb::string_view(
+                            static_cast<const char*>(ev1.data), ev1.data_len
+                        );
+
+                        std::cout << "[" << ev1.id << "]";
+                        std::cout << "\tkey: \"" << key << "\"\n";
+                        std::cout << "\tval: \"" << val << "\"\n" << std::endl;
+                    }
+                } else {
+                    std::cerr << "hidx.init failed: " << hidx.errmsg() << std::endl;
+                }
+            }
+*/
+
         } else {
             std::cerr << "kvsymdb::file_reader() failed: " << dbf.errmsg() << std::endl;
             dbf.clearerr();

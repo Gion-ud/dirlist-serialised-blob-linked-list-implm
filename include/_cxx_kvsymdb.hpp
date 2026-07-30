@@ -16,8 +16,8 @@ struct kvsymdb {
     using entry         = kvsymdb_entry_t;
     using buffer_view   = kvsymdb_bufview_t;
     using self_state    = kvsymdb_state_t;
-    struct entry_view;
 
+    struct entry_view;
     struct string_view : public kvsymdb_bufview_t {
         string_view() noexcept
         {
@@ -68,6 +68,8 @@ public:
         : m_symdb_p(nullptr), m_errno(0)
     {
         this->m_symdb_p = create_kvsymdb(entc, INIT_BUFSIZE, &this->m_errno);
+    }
+    kvsymdb(const char *) noexcept : m_symdb_p(nullptr), m_errno(0) {
     }
     ~kvsymdb() noexcept {
         this->_cleanup();
@@ -230,22 +232,19 @@ public:
     private:
         kvsymdb    *m_parent_symdb_p;
 
-        void _zero_init_base() noexcept {
-            memset(this, 0, sizeof(kvsymdb_entview_t));
-        }
     public:
         entry_view() noexcept :
+            kvsymdb_entview_t{},
             m_parent_symdb_p(nullptr)
         {
-            this->_zero_init_base();
         }
         entry_view(
             kvsymdb        &symdb_ref,
             const entry    &ent_ref
         ) noexcept :
+            kvsymdb_entview_t{},
             m_parent_symdb_p(&symdb_ref)
         {
-            this->_zero_init_base();
             this->from_entry(symdb_ref, ent_ref);
         }
 
@@ -295,43 +294,161 @@ public:
 
     struct file_reader;
 
+/*
+    bool _init_as_file_reader(const char *filename) noexcept {
+        if (this->is_init()) return false;
+        this->m_symdb_p =
+            create_kvsymdb_file_reader(
+                filename,
+                &this->m_errno
+            );
+        return (!!this->m_symdb_p);
+    }
+*/
+
 }; // struct kvsymdb
+
+
 
 namespace _intrnl {
 struct hash_index;
 } // namespace _intrnl
 
+#include <assert.h>
 
+struct kvsymdb::file_reader : private kvsymdb_file_reader_t {
+private:
+    int         m_errno;
+    buffer_view m_bufview;
+public:
+    file_reader(const char *filename) noexcept :
+        kvsymdb_file_reader_t{},
+        m_errno(0),
+        m_bufview{}
+    {
+        auto *reader_p = kvsymdb_file_reader_init(
+            this,
+            filename,
+            &this->m_errno
+        );
+        if (!reader_p) return;
+        this->m_bufview.data = reader_p->_base;
+        this->m_bufview.size = reader_p->_size;
+    }
+
+    bool is_init() const noexcept {
+        return (!!this->_base);
+    }
+    const char *errmsg() const noexcept {
+        return kvsymdb_strerror(this->m_errno);
+    }
+    void clearerr() noexcept {
+        this->m_errno = 0;
+    }
+
+    const file_header *get_file_header() const noexcept {
+        return static_cast<const file_header*>(this->_base);
+    }
+
+    const buffer_view &get_file_view() const noexcept {
+        return this->m_bufview;
+    }
+
+    uint32_t entc() const noexcept {
+        return this->get_file_header()->fh_entcnt;
+    }
+
+    int get_entry_view(
+        const entry    *ent_p,
+        entry_view     *out_view_p
+    ) noexcept {
+        return kvsymdb_entry_to_view(
+            &this->get_file_view(),
+            this->entc(),
+            ent_p,
+            out_view_p,
+            &this->m_errno
+        );
+    };
+
+    ~file_reader() noexcept {
+        kvsymdb_file_reader_cleanup(this);
+    }
+};
 
 struct kvsymdb::reader : private kvsymdb_reader_t { // inherited from c abi struct
 private:
     int m_errno;
 public:
-    reader(kvsymdb &symdb_ref) noexcept : m_errno(0) {
-        int rc = ::kvsymdb_reader_bind(
-            this,
-            symdb_ref.m_symdb_p,
+    reader(const kvsymdb &symdb_ref) noexcept :
+        kvsymdb_reader_t{}, m_errno(0)
+    {
+        kvsymdb::self_state dbst{};
+        int rc = kvsymdb_get_intrnl_state_view(
+            symdb_ref._raw(),
+            &dbst,
             &this->m_errno
         );
-        if (rc != KVSYMDB_SUCCESS) {
-            this->_symdb_p = nullptr;
-        }
-    }
-    reader(kvsymdb_t *c_symdb_p) noexcept : m_errno(0) {
-        int rc = ::kvsymdb_reader_bind(
+        if (rc) return;
+
+        kvsymdb::buffer_view arena_view {
+            .size = dbst.buf_len,
+            .data = dbst.arena_buf,
+        };
+
+        rc = kvsymdb_reader_bind(
             this,
-            c_symdb_p,
+            &arena_view,
+            dbst.ent_count,
             &this->m_errno
         );
-        if (rc != KVSYMDB_SUCCESS) {
-            this->_symdb_p = nullptr;
+        if (rc) {
+            this->_arena_view.data = nullptr;
         }
     }
+
+    reader(file_reader &dbif_ref) noexcept :
+        kvsymdb_reader_t{}, m_errno(0)
+    {
+        auto *fhdr_p = dbif_ref.get_file_header();
+        buffer_view view{
+            .size = fhdr_p->fh_buflen,
+            .data = fhdr_p->fh_data,
+        };
+        int rc = kvsymdb_reader_bind(
+            this,
+            &view,
+            fhdr_p->fh_entcnt,
+            &this->m_errno
+        );
+        if (rc) {
+            this->_arena_view.data = nullptr;
+        }
+    }
+
+    reader(
+        const kvsymdb::buffer_view &arena_view_ref,
+        uint32_t                    entry_count
+    ) noexcept :
+        kvsymdb_reader_t{}, m_errno(0)
+    {
+        int rc = ::kvsymdb_reader_bind(
+            this,
+            &arena_view_ref,
+            entry_count,
+            &this->m_errno
+        );
+        if (rc) {
+            this->_arena_view.data = nullptr;
+        }
+    }
+
     ~reader() noexcept {
         kvsymdb_reader_unbind(this);
     }
-    //reader(const reader &other_ref) = delete;
-    //reader& operator=(const reader &other_ref) = delete;
+
+    reader(const reader &other_ref) = delete;
+    reader& operator=(const reader &other_ref) = delete;
 
     void clearerr() noexcept {
         this->m_errno = 0;
@@ -341,11 +458,12 @@ public:
     }
 
     bool is_init() const noexcept {
-        return (!!this->_symdb_p);
+        return (!!this->_arena_view.data);
     }
     const entry *read() noexcept {
         return kvsymdb_reader_read(this, &this->m_errno);
     }
+
     // lseek
     int rewind() noexcept {
         return kvsymdb_reader_rewind(this);
@@ -436,7 +554,14 @@ private:
     using lookup_result = _intrnl::hash_index::lookup_result;
 
     _intrnl::hash_index m_base;
+
 public:
+    int _init(
+        const kvsymdb_t    *symdb_p,
+        uint32_t            capacity
+    ) noexcept;
+
+
     const char *errmsg() const noexcept {
         return kvsymdb_strerror(this->m_base.m_errno);
     }
@@ -450,14 +575,6 @@ public:
         return (!!this->m_base.m_c_symdb_p);
     }
 
-    int init(
-        kvsymdb    &symdb_ref,
-        uint32_t    capacity
-    ) noexcept;
-    int _init(
-        const kvsymdb_t    *symdb_p,
-        uint32_t            capacity
-    ) noexcept;
     int insert(const entry *ent_p) noexcept;
     const entry *get(const string_view &key_ref) noexcept;
     const entry *get(const char *key_cstr) noexcept {
@@ -472,59 +589,19 @@ public:
 
     int remove(const entry *ent_p) noexcept;
 
+    int init(
+        const kvsymdb  &symdb_ref,
+        uint32_t        capacity
+    ) noexcept;
+
     hash_index() noexcept : m_base{} {
     }
 
     ~hash_index() noexcept = default;
     hash_index(const hash_index &other_ref) = delete;
     hash_index& operator=(const hash_index &other_ref) = delete;
-};
 
-struct kvsymdb::file_reader {
-private:
-    kvsymdb_t  *m_c_symdb_p;
-    int         m_errno;
 
-public:
-    file_reader(const char *filename) noexcept :
-        m_c_symdb_p(nullptr), m_errno(0)
-    {
-        m_c_symdb_p = ::create_kvsymdb_file_reader(
-            filename,
-            &this->m_errno
-        );
-    }
-
-    bool is_init() const noexcept {
-        return (!!this->m_c_symdb_p);
-    }
-    const char *errmsg() const noexcept {
-        return ::kvsymdb_strerror(this->m_errno);
-    }
-    void clearerr() noexcept {
-        this->m_errno = 0;
-    }
-
-    reader make_reader() noexcept {
-        return reader(this->m_c_symdb_p);
-    }
-
-    int get_entry_view(
-        const entry    *ent_p,
-        entry_view     *out_entview_p
-    ) noexcept {
-        return kvsymdb_get_entview(
-            this->m_c_symdb_p,
-            ent_p,
-            out_entview_p,
-            &this->m_errno
-        );
-    }
-
-    ~file_reader() {
-        ::destroy_kvsymdb(this->m_c_symdb_p);
-        this->m_errno = 0;
-    }
 };
 
 
@@ -534,3 +611,49 @@ public:
 
 
 
+
+
+/*
+
+struct kvsymdb::file_reader {
+private:
+    kvsymdb m_symdb;
+public:
+    file_reader(const char *filename) noexcept : m_symdb(filename) {
+        assert(!m_symdb.is_init());
+        bool rc = this->m_symdb._init_as_file_reader(filename);
+        assert(rc);
+        assert(this->m_symdb.is_init());
+    }
+
+    kvsymdb &base() noexcept {
+        return this->m_symdb;
+    }
+
+    bool is_init() const noexcept {
+        return (this->m_symdb.is_init());
+    }
+    const char *errmsg() const noexcept {
+        return this->m_symdb.errmsg();
+    }
+    void clearerr() noexcept {
+        this->m_symdb.clearerr();
+    }
+
+    uint32_t entc() noexcept {
+        self_state dbst{};
+        int rc = this->m_symdb.get_self_state(&dbst);
+        if (rc) return 0u;
+        return dbst.ent_count;
+    }
+
+    int get_entry_view(
+        const entry    *ent_p,
+        entry_view     *out_entview_p
+    ) noexcept {
+        return this->m_symdb.get_entry_view(ent_p, out_entview_p);
+    }
+
+    ~file_reader() noexcept = default; // rule of zero
+};
+*/

@@ -49,9 +49,16 @@ typedef struct _kvsymdb_bufview {
 typedef kvsymdb_entry_t *kvsymdb_iterator_t;
 
 
+/*
 struct _c_kvsymdb_reader {
     const kvsymdb_t    *_symdb_p;   // [0]
     uint32_t            _pos;       // [1]
+};
+*/
+struct _c_kvsymdb_reader {
+    kvsymdb_bufview_t   _arena_view;    // [0]
+    uint32_t            _entc;          // [1]
+    uint32_t            _pos;           // [2]
 };
 
 // newly introduced: hash index table
@@ -132,11 +139,31 @@ extern kvsymdb_iterator_t kvsymdb_iterator_next(
 );
 extern const char *kvsymdb_strerror(int kvsymdb_errno);
 
+/*
 // New APIs since 13/07/2026
 extern int kvsymdb_reader_bind(
     kvsymdb_reader_t   *reader_p,
     const kvsymdb_t    *symdb_p,
     int                *out_errno_p
+);
+extern const kvsymdb_entry_t *kvsymdb_reader_read(
+    kvsymdb_reader_t   *reader_p,
+    int                *out_errno_p
+);
+extern int kvsymdb_reader_rewind(
+    kvsymdb_reader_t   *reader_p
+);
+extern void kvsymdb_reader_unbind(
+    kvsymdb_reader_t   *reader_p
+);
+
+*/
+// New APIs since 13/07/2026
+extern int kvsymdb_reader_bind(
+    kvsymdb_reader_t           *reader_p,
+    const kvsymdb_bufview_t    *arena_view_p,
+    uint32_t                    entry_count,
+    int                        *out_errno_p
 );
 extern const kvsymdb_entry_t *kvsymdb_reader_read(
     kvsymdb_reader_t   *reader_p,
@@ -193,10 +220,12 @@ typedef struct _c_kvsymdb_file_header {
     uint8_t     fh_data[];  // [6]
 } kvsymdb_file_header_t;
 
+
 #include <stdio.h>
 typedef struct _c_kvsymdb_file_reader {
-    int                 fileno;
-    kvsymdb_bufview_t   view;
+    int         _fileno;
+    void       *_base;
+    size_t      _size;
 } kvsymdb_file_reader_t;
 
 /*
@@ -207,8 +236,26 @@ typedef struct _c_kvsymdb_file_builder {
 */
 
 // questionable api
-kvsymdb_t *create_kvsymdb_file_reader(const char *filename, int *out_errno_p);
+//kvsymdb_t *create_kvsymdb_file_reader(const char *filename, int *out_errno_p);
 
+kvsymdb_file_reader_t *
+kvsymdb_file_reader_init(
+    void       *_obj_mem,
+    const char *filename,
+    int        *out_errno_p
+);
+
+void kvsymdb_file_reader_cleanup(
+    kvsymdb_file_reader_t  *reader_p
+);
+
+int kvsymdb_entry_to_view(
+    const kvsymdb_bufview_t    *arena_view_p,
+    uint32_t                    entc,
+    const kvsymdb_entry_t      *ent_p,
+    kvsymdb_entview_t          *out_entview_p,
+    int                        *out_errno_p
+);
 
 #ifdef __cplusplus
 }
