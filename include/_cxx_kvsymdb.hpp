@@ -45,11 +45,6 @@ struct kvsymdb {
             this->set(cstr);
             return *this;
         }
-        ~string_view() noexcept = default;
-        string_view(const string_view &other_ref) noexcept = default;
-        string_view(string_view &&other_rref) noexcept = default;
-        string_view &operator=(const string_view &other_ref) noexcept = default;
-        string_view &operator=(string_view &&other_rref) noexcept = default;
     }; // struct string_view
 
 private:
@@ -242,19 +237,19 @@ public:
         }
         entry_view(
             kvsymdb        &symdb_ref,
-            const entry    &ent_ref
+            const entry    *ent_p
         ) noexcept :
             kvsymdb_entview_t{},
             m_parent_symdb_p(&symdb_ref)
         {
-            this->from_entry(symdb_ref, ent_ref);
+            this->from_entry(symdb_ref, ent_p);
         }
 
         int from_entry(
             kvsymdb        &symdb_ref,
-            const entry    &ent_ref
+            const entry    *ent_p
         ) noexcept {
-            int rc = symdb_ref.get_entry_view(&ent_ref, this);
+            int rc = symdb_ref.get_entry_view(ent_p, this);
             if (!rc) this->m_parent_symdb_p = &symdb_ref;
             return rc;
         }

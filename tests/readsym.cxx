@@ -2,6 +2,7 @@
 
 #include <kvsymdb.h>
 #include <iostream>
+#include <iomanip>
 #include <assert.h>
 #include <stdint.h>
 #include <vector>
@@ -29,7 +30,8 @@ constexpr auto USAGE_MSG =
         "\t--key <name>\n"
         "\t--id <id>\n"
         "\t--keys-only\n"
-        "\t--kv-pairs\n"        
+        "\t--kv-pairs\n"
+        "\t--help\n"
     );
 
 
@@ -61,6 +63,7 @@ int main(int argc, char *argv[]) {
         bool        is_id_used;
         bool        is_keys_only;
         bool        is_kv_pair;
+        bool        is_info;
     } cli_opt = {
         .key{},
         .key_hash       = 0u,
@@ -69,6 +72,7 @@ int main(int argc, char *argv[]) {
         .is_id_used     = false,
         .is_keys_only   = false,
         .is_kv_pair     = false,
+        .is_info        = false,
     };
 
     auto compare_string_view = [](
@@ -110,14 +114,18 @@ int main(int argc, char *argv[]) {
         
         if (argc == 3) {
             auto opt = string_view(argv[2]);
-            if (compare_string_view(opt, string_view("--keys-only")) == 0) {
-                std::clog << "[INFO] option --keys-only provided" << std::endl;
+            if (compare_string_view(opt, make_string_literal("--keys-only")) == 0) {
                 cli_opt.is_keys_only = true;
                 break;
             
-            } else if (compare_string_view(opt, string_view("--kv-pairs")) == 0) {
-                std::clog << "[INFO] option --kv-pairs provided" << std::endl;
+            } else if (compare_string_view(opt, make_string_literal("--kv-pairs")) == 0) {
                 cli_opt.is_kv_pair = true;
+                break;
+            } else if (compare_string_view(opt, make_string_literal("--help")) == 0) {
+                std::cout << USAGE_MSG << std::endl;
+                return 0;
+            } else if (compare_string_view(opt, make_string_literal("--info")) == 0) {
+                cli_opt.is_info = true;
                 break;
             } else {
                 std::cerr << "[ERROR] bad option\n" << USAGE_MSG << std::endl;
@@ -129,7 +137,6 @@ int main(int argc, char *argv[]) {
             auto opt        = string_view(argv[2]);
             auto opt_val    = string_view(argv[3]);
             if (compare_string_view(opt, string_view("--id")) == 0) {
-                std::clog << "[INFO] option --id provided" << std::endl;
                 if (!cstr_to_u32(opt_val.data(), &cli_opt.id)) {
                     std::cerr <<
                         "[ERROR] bad id option\n" << USAGE_MSG << std::endl;
@@ -138,7 +145,6 @@ int main(int argc, char *argv[]) {
                 cli_opt.is_id_used = true;
                 break;
             } else if (compare_string_view(opt, string_view("--key")) == 0) {
-                std::clog << "[INFO] option --key provided" << std::endl;
                 cli_opt.key.set(opt_val.data(), opt_val.length());
                 cli_opt.key_hash = cli_opt.key.hash32();
                 cli_opt.is_key_used = true;
@@ -154,6 +160,27 @@ int main(int argc, char *argv[]) {
     if (!dbif.is_init()) {
         std::cerr << "[ERROR] kvsymdb::file_reader failed: " << dbif.errmsg() << "\n" << std::endl;
         return -1;
+    }
+
+    if (cli_opt.is_info) {
+        auto *fhdr_p = dbif.get_file_header();
+        std::printf(
+            "file_header:\n"
+            "\tfh_magic:\t0x%.8x\n"   
+            "\tfh_version:\t0x%.4x\n"
+            "\tfh_align:\t%u\n"
+            "\tfh_entcnt:\t%u\n"
+            "\tfh_buflen:\t%u\n"
+            "\tfh_crc32:\t0x%.8x\n\n",
+            fhdr_p->fh_magic,
+            fhdr_p->fh_version,
+            fhdr_p->fh_align,
+            fhdr_p->fh_entcnt,
+            fhdr_p->fh_buflen,
+            fhdr_p->fh_crc32
+        );
+        std::fflush(stdout);
+        return 0;
     }
 
     if (cli_opt.is_id_used && cli_opt.id >= dbif.entc()) {
@@ -203,6 +230,8 @@ int main(int argc, char *argv[]) {
         }
         reader.rewind();
     }
+
+    assert(db_entp_v.size() == dbif.entc());
 
     if (cli_opt.is_key_used) {
         std::cerr << "[ERROR] key not found\n" << std::endl;
