@@ -425,8 +425,10 @@ inline bool is_valid_file_header(
         fhdr_p->fh_magic    == FILE_MAGIC &&
         fhdr_p->fh_version  == FILE_VERSION &&
         fhdr_p->fh_align    == FILE_ALIGN &&
-        fhdr_p->fh_buflen   == filesize - sizeof(kvsymdb_file_header_t)
+        fhdr_p->fh_buflen   <= filesize - sizeof(kvsymdb_file_header_t)
     );
+
+    // og: fhdr_p->fh_buflen == filesize - sizeof(kvsymdb_file_header_t)
 }
 
 

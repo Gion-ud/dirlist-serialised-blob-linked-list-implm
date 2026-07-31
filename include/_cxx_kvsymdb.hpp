@@ -69,8 +69,10 @@ public:
     {
         this->m_symdb_p = create_kvsymdb(entc, INIT_BUFSIZE, &this->m_errno);
     }
+    /*
     kvsymdb(const char *) noexcept : m_symdb_p(nullptr), m_errno(0) {
     }
+    */
     ~kvsymdb() noexcept {
         this->_cleanup();
     }
@@ -293,19 +295,6 @@ public:
     };
 
     struct file_reader;
-
-/*
-    bool _init_as_file_reader(const char *filename) noexcept {
-        if (this->is_init()) return false;
-        this->m_symdb_p =
-            create_kvsymdb_file_reader(
-                filename,
-                &this->m_errno
-            );
-        return (!!this->m_symdb_p);
-    }
-*/
-
 }; // struct kvsymdb
 
 
@@ -479,6 +468,7 @@ struct _intrnl::hash_index {
         bucket *bucket_p;
         slot   *slot_p;
     };
+    friend struct kvsymdb::hash_index;
 
 private:
     struct pool {
@@ -512,7 +502,6 @@ private:
         ~pool() noexcept = default;
     };
 
-public:
     const kvsymdb_t    *m_c_symdb_p;    // [0]
     pool                m_pool;         // [1]
     bucket             *m_bucket_arr;   // [2]
@@ -607,53 +596,3 @@ public:
 
 } // namespace cxx_kvsymdb 
 
-
-
-
-
-
-
-/*
-
-struct kvsymdb::file_reader {
-private:
-    kvsymdb m_symdb;
-public:
-    file_reader(const char *filename) noexcept : m_symdb(filename) {
-        assert(!m_symdb.is_init());
-        bool rc = this->m_symdb._init_as_file_reader(filename);
-        assert(rc);
-        assert(this->m_symdb.is_init());
-    }
-
-    kvsymdb &base() noexcept {
-        return this->m_symdb;
-    }
-
-    bool is_init() const noexcept {
-        return (this->m_symdb.is_init());
-    }
-    const char *errmsg() const noexcept {
-        return this->m_symdb.errmsg();
-    }
-    void clearerr() noexcept {
-        this->m_symdb.clearerr();
-    }
-
-    uint32_t entc() noexcept {
-        self_state dbst{};
-        int rc = this->m_symdb.get_self_state(&dbst);
-        if (rc) return 0u;
-        return dbst.ent_count;
-    }
-
-    int get_entry_view(
-        const entry    *ent_p,
-        entry_view     *out_entview_p
-    ) noexcept {
-        return this->m_symdb.get_entry_view(ent_p, out_entview_p);
-    }
-
-    ~file_reader() noexcept = default; // rule of zero
-};
-*/

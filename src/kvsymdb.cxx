@@ -536,7 +536,6 @@ int kvsymdb_reader_bind(
     int                        *out_errno_p
 ) {
     // kvsymdb_t verification required
-    dbg_log_msg("");
     if (!out_errno_p) return KVSYMDB_FAILED;
     *out_errno_p = _intrnl::error_code::NOERROR;
     if (!reader_p || !arena_view_p || !arena_view_p->data)
@@ -592,7 +591,6 @@ const kvsymdb_entry_t *kvsymdb_reader_read(
         static_cast<const uint8_t*>(reader_p->_arena_view.data) + reader_p->_pos
     );
 
-    dbg_log_msg("#5");
     if (
         !_intrnl::is_valid_entry(
             &reader_p->_arena_view,
@@ -606,7 +604,6 @@ const kvsymdb_entry_t *kvsymdb_reader_read(
         // i.e. The payload is out of bound / truncated
         // to be safe we set _pos to _buf_len (guaranteed EOF)
 
-    
         reader_p->_pos = reader_p->_arena_view.size;
         *out_errno_p = _intrnl::error_code::ERR_BADENT;
         goto failed;
@@ -620,74 +617,9 @@ failed:
     return nullptr;
 }
 
-
-/*
-const kvsymdb_entry_t *kvsymdb_reader_read(
-    kvsymdb_reader_t   *reader_p,
-    int                *out_errno_p
-) {
-    // kvsymdb_t verification required
-    if (!out_errno_p) return nullptr;
-    *out_errno_p = _intrnl::error_code::NOERROR;
-
-    const kvsymdb_entry_t *ent_p{};
-    uint32_t min_reclen{};
-
-    if (!reader_p || !reader_p->_symdb_p) {
-        *out_errno_p = _intrnl::error_code::ERR_NULLPTR;
-        goto failed;
-    }
-
-    // check alignment
-    if (
-        reader_p->_pos &&
-        !align_utils::\
-            align_off<uint32_t, kvsymdb::ALIGN_SIZE>(reader_p->_pos)
-    ) {
-        *out_errno_p = _intrnl::error_code::ERR_BADALIGN;
-        goto failed;
-    }
-
-    // checking is _pos + min_reclen <= than buf_len so 
-    // the rec header is safe for deref
-    min_reclen = sizeof(kvsymdb_record_header_t);
-    if (reader_p->_pos + min_reclen > reader_p->_symdb_p->_buf_len) {
-        reader_p->_pos = reader_p->_symdb_p->_buf_len; // EOF
-        *out_errno_p = _intrnl::error_code::ERR_RDEOF;
-        goto failed;
-    }
-
-    ent_p = reinterpret_cast<const kvsymdb_entry_t*>(
-        reader_p->_symdb_p->_arena_buf + reader_p->_pos
-    );
-
-    dbg_log_msg("#5");
-    if (!_intrnl::is_valid_entry(reader_p->_symdb_p, ent_p)) {
-        // It is usually bc _pos + sizeof(header) >= buf_len
-        // so (Header*)((byte*)base + _pos) is safe to deref
-        // but _pos + header.rec_len_aligned > buf_len
-        // i.e. The payload is out of bound / truncated
-        // to be safe we set _pos to _buf_len (guaranteed EOF)
-        reader_p->_pos = reader_p->_symdb_p->_buf_len;
-        *out_errno_p = _intrnl::error_code::ERR_BADENT;
-        goto failed;
-    }
-
-    _intrnl::assert_intrnl_state(reader_p->_symdb_p); 
-   
-    reader_p->_pos += ent_p->record_len;    
-    assert(reader_p->_pos <= reader_p->_symdb_p->_buf_len);
-
-    return ent_p;
-failed:
-    return nullptr;
-}
-*/
-
 int kvsymdb_reader_rewind(
     kvsymdb_reader_t   *reader_p
 ) {
-    dbg_log_msg("");
     if (!reader_p) return KVSYMDB_FAILED;
     reader_p->_pos = 0u;
     return KVSYMDB_SUCCESS;
@@ -1149,7 +1081,7 @@ kvsymdb_file_reader_init(
 
     auto arena_buf = reinterpret_cast<const uint8_t*>(hdr_p + 1);
 
-    auto calc_crc32 = [](const void *buf, uint32_t buf_len) {
+    auto calc_crc32 = [](const void *buf, uint32_t buf_len) -> uint32_t {
         return static_cast<uint32_t>(
             ::crc32(0UL, static_cast<const uint8_t*>(buf), buf_len)
         );
@@ -1160,6 +1092,7 @@ kvsymdb_file_reader_init(
         return nullptr;
     }
 
+    // ownership transfer out of RAII for c api
     fd.move_out(&reader_p->_fileno);
     dbif_map.move_out(&reader_p->_base, &reader_p->_size);    
 
@@ -1172,6 +1105,7 @@ void kvsymdb_file_reader_cleanup(
 ) {
     if (!reader_p) return;
 
+    // using RAII for cleanup
     (void)FileDescHandle(reader_p->_fileno);
     (void)MMapHandle(reader_p->_base, reader_p->_size);
 
@@ -1179,115 +1113,3 @@ void kvsymdb_file_reader_cleanup(
     reader_p->_base     = nullptr;
     reader_p->_size     = 0UL;
 }
-
-/*
-// temporary solution
-extern "C" kvsymdb_t *
-create_kvsymdb_file_reader(const char *filename, int *out_errno_p) {
-    if (!out_errno_p) return nullptr;
-    *out_errno_p = _intrnl::error_code::NOERROR;
-
-    CXX_FILE dbf(fopen(filename, "rb")); // raii
-
-    if (!dbf.get()) {
-        *out_errno_p = _intrnl::error_code::ERR_FOPEN;
-        return nullptr;
-    }
-
-    struct ::stat file_st{};
-    if (fstat(dbf.fileno(), &file_st) < 0) {
-        dbg_log_msg("");
-        dbg_print("fstat: %s", strerror(errno));
-        *out_errno_p = _intrnl::error_code::ERR_FSTAT;
-        return nullptr;
-    }
-
-    uint32_t filesize = static_cast<uint32_t>(file_st.st_size);
-    if (filesize < sizeof(kvsymdb::file_header)) {
-        *out_errno_p = _intrnl::error_code::ERR_BADDBF;
-        return nullptr;
-    }
-
-    auto filemap = MMapHandle(
-        mmap(
-            nullptr,
-            filesize,
-            PROT_READ,
-            MAP_SHARED | MAP_FILE,
-            dbf.fileno(),
-            0L
-        ),
-        filesize
-    );
-
-    if (!filemap.is_good()) {
-        *out_errno_p = _intrnl::error_code::ERR_MMAP;
-        return nullptr;
-    }
-
-    auto *hdr_p = static_cast<const kvsymdb::file_header*>(
-        filemap.data()
-    );
-
-    if (!_intrnl::is_valid_file_header(hdr_p, filesize)) {
-        *out_errno_p = _intrnl::error_code::ERR_BADFHDR;
-        return nullptr;
-    }
-
-    auto arena_buf = reinterpret_cast<const uint8_t*>(hdr_p + 1);
-    auto calc_crc32 = [](const void *buf, uint32_t buf_len) {
-        return static_cast<uint32_t>(
-            ::crc32(0UL, static_cast<const uint8_t*>(buf), buf_len)
-        );
-    };
-
-    if (calc_crc32(arena_buf, hdr_p->fh_buflen) != hdr_p->fh_crc32) {
-        *out_errno_p = _intrnl::error_code::ERR_CRC;
-        return nullptr;
-    }
-
-    kvsymdb_t *_symdb_p =
-        static_cast<kvsymdb_t*>(
-            ::operator new(
-                sizeof(kvsymdb_t) + hdr_p->fh_buflen,
-                std::nothrow
-            )
-        );
-
-    if (!_symdb_p) {
-        *out_errno_p = _intrnl::error_code::ERR_OPNEW;
-        goto failed_ret;
-    }
-
-    _symdb_p->_entrycnt     = hdr_p->fh_entcnt;
-    _symdb_p->_entrycap     = hdr_p->fh_entcnt;
-    _symdb_p->_buf_len      = hdr_p->fh_buflen;
-    _symdb_p->_buf_size     = hdr_p->fh_buflen;
-
-    memcpy(_symdb_p->_arena_buf, arena_buf, hdr_p->fh_buflen);
-
-    _symdb_p->_state_arr    =
-        static_cast<uint8_t*>(
-            operator new[](hdr_p->fh_entcnt * sizeof(uint8_t), std::nothrow)
-        );
-
-    if (!_symdb_p->_state_arr) {
-        *out_errno_p = _intrnl::error_code::ERR_OPNEWARR;
-        goto failed;
-    }
-
-    memset(
-        _symdb_p->_state_arr,
-        _intrnl::state::ST_ALIVE,
-        hdr_p->fh_entcnt * sizeof(uint8_t)
-    );
-
-    return _symdb_p;
-failed:
-    destroy_kvsymdb(_symdb_p);
-failed_ret:
-    return nullptr;
-}
-
-*/
-
