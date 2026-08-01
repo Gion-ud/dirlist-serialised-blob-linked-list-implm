@@ -217,8 +217,8 @@ namespace align {
 
         return
             sizeof(kvsymdb_record_header_t) + 
-            cstr_size_aligned<align_size>(key_p->size) +
-            blob_size_aligned<align_size>(val_p->size);
+            cstr_size_aligned<align_size>(key_p->buf_size) +
+            blob_size_aligned<align_size>(val_p->buf_size);
     }
 } // namespace align
 
@@ -226,7 +226,7 @@ inline void assert_intrnl_state(const kvsymdb_t *symdb_p) {
     assert(symdb_p->_buf_size >= kvsymdb::INIT_BUFSIZE);
     assert(symdb_p->_entrycap >= kvsymdb::INIT_ENTC);
     assert(symdb_p->_buf_len <= symdb_p->_buf_size);
-    bool is_aligned_buf_len = align_utils::\
+    bool is_aligned_buf_len = align_utils::
         is_aligned_off<uint32_t, kvsymdb::ALIGN_SIZE>(symdb_p->_buf_len);
     assert(is_aligned_buf_len);
     assert(symdb_p->_entrycnt <= symdb_p->_entrycap);
@@ -306,8 +306,8 @@ inline bool is_valid_entry(
     assert(arena_view_p && ent_p);
 
     return _is_valid_entry(
-        arena_view_p->data,
-        arena_view_p->size,
+        arena_view_p->buf_data,
+        arena_view_p->buf_size,
         entc,
         ent_p
     );
@@ -619,7 +619,7 @@ inline int hash_index::lookup(
         this->m_errno = error_code::ERR_NULLPTR;
         return KVSYMDB_FAILED;
     }
-    if (!key_ref.data || !key_ref.size) {
+    if (!key_ref.data() || !key_ref.length()) {
         this->m_errno = error_code::ERR_ENTVIEW;
         return KVSYMDB_FAILED;
     }
@@ -640,8 +640,8 @@ inline int hash_index::lookup(
                 &view
             );
             if (
-                key_ref.size == view.name_len &&
-                memcmp(key_ref.data, view.name, view.name_len) == 0
+                key_ref.length() == view.name_len &&
+                memcmp(key_ref.data(), view.name, view.name_len) == 0
             ) {
                 out_res_p->bucket_p = bucket_p;
                 out_res_p->slot_p   = slot_p;

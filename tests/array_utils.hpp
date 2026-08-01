@@ -1,6 +1,5 @@
 #pragma once
-#include <stdint.h>
-#include <utility>
+#include <stddef.h>
 
 namespace array_utils {
     namespace c_array {

@@ -1,5 +1,5 @@
 #all: keylist.o tskl
-all: build/kvsymdb.o bin/readsym #bin/symdb bin/tssym
+all: build/kvsymdb.o bin/readsym bin/tssym #bin/symdb
 #all: bin/list add_bin_path
 
 _C_CXX_FLAGS = -O2 -Wall -Wextra -fno-exceptions \

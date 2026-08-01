@@ -42,8 +42,8 @@ typedef struct _kvsymdb_entview {
 } kvsymdb_entview_t;
 
 typedef struct _kvsymdb_bufview {
-    size_t          size;
-    const void     *data;
+    size_t      buf_size;
+    const void *buf_data;
 } kvsymdb_bufview_t;
 
 typedef kvsymdb_entry_t *kvsymdb_iterator_t;
@@ -177,7 +177,6 @@ extern void kvsymdb_reader_unbind(
 );
 
 
-
 extern kvsymdb_hash_index_t *
 create_kvsymdb_hash_index(
     const kvsymdb_t    *symdb_p,
@@ -203,7 +202,11 @@ extern int kvsymdb_hidx_remove(
     int                    *out_errno_p
 );
 
-
+int kvsymdb_file_builder_dump(
+    const kvsymdb_t    *symdb_p,
+    const char         *filename,
+    int                *out_errno_p
+);
 
 enum kvsymdb_return_code {
     KVSYMDB_SUCCESS = 0,

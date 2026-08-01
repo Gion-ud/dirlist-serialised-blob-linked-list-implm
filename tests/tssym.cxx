@@ -149,7 +149,7 @@ int main() {
                 kvsymdb::buffer_view{ev.name_len, ev.name} <<
                 "'\n";
             
-            kvsymdb::string_view key(ev.name, ev.name_len);
+            kvsymdb::string_view key(ev.name_len, ev.name);
             auto ent_p = hidx[key];
             assert(ent_p);
             kvsymdb::entry_view ev1(*dbp, ent_p);
@@ -173,7 +173,7 @@ int main() {
         for (const auto &ent_ref : *dbp) {
             kvsymdb::entry_view ev(*dbp, &ent_ref);
             assert(ev.is_init());
-            auto ent_p = hidx.get(kvsymdb::string_view(ev.name, ev.name_len));
+            auto ent_p = hidx.get(kvsymdb::string_view(ev.name_len, ev.name));
             assert(!ent_p);
         }
 
@@ -188,8 +188,8 @@ int main() {
             kvsymdb::entry_view ev(*dbp, &ent_ref);
             assert(ev.is_init());
 
-            kvsymdb::string_view key(ev.name, ev.name_len);
-            std::cout << "[" << ev.id << "]\t" << "key='" << kvsymdb::string_view(ev.name, ev.name_len) << "'\n";            
+            kvsymdb::string_view key(ev.name_len, ev.name);
+            std::cout << "[" << ev.id << "]\t" << "key='" << kvsymdb::string_view(ev.name_len, ev.name) << "'\n";            
 
             auto ent_p = hidx.get(key);
             if (!ent_p) {
@@ -209,7 +209,7 @@ int main() {
         auto key = make_string_literal("readdir");
         kvsymdb::entry_view ev{};
 
-        ev.from_entry(*dbp, hidx.get(kvsymdb::string_view(key.data(), key.length())));
+        ev.from_entry(*dbp, hidx.get(kvsymdb::string_view(key.length(), key.data())));
         kvsymdb_print::print_ent_kv(ev);
 
         std::cout << std::endl;

@@ -2,7 +2,6 @@
 
 #include <kvsymdb.h>
 #include <iostream>
-#include <iomanip>
 #include <assert.h>
 #include <stdint.h>
 #include <vector>
@@ -111,6 +110,11 @@ int main(int argc, char *argv[]) {
 
             return true;
         };
+
+        if (argc == 2 && compare_string_view(argv[1], make_string_literal("--help")) == 0) {
+            std::cout << USAGE_MSG << std::endl;
+            return 0;
+        }
         
         if (argc == 3) {
             auto opt = string_view(argv[2]);
@@ -248,7 +252,7 @@ int main(int argc, char *argv[]) {
         }
         if (cli_opt.is_keys_only) {
             using kvsymdb_print::operator<<;
-            std::cout << kvsymdb::string_view(ev.name, ev.name_len) << "\n";
+            std::cout << kvsymdb::string_view(ev.name_len, ev.name) << "\n";
             continue;
         } else if (cli_opt.is_kv_pair) {
             kvsymdb_print::print_ent_kv(ev);

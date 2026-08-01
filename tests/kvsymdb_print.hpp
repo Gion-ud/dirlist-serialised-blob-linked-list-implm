@@ -42,8 +42,8 @@ namespace kvsymdb_print {
         const kvsymdb::buffer_view &str_view_ref
     ) {
         return of_ref.write(
-            static_cast<const char*>(str_view_ref.data),
-            str_view_ref.size
+            static_cast<const char*>(str_view_ref.data()),
+            str_view_ref.length()
         );
     }
 }

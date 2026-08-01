@@ -161,8 +161,8 @@ extern "C" int kvsymdb_compact(
     int        *out_errno_p
 ) {
     using iterator      = kvsymdb_iterator_t;
-    using entry_view    = kvsymdb_entview_t;
-    using buffer_view   = kvsymdb_bufview_t;
+    using entry_view    = kvsymdb::entry_view;
+    using buffer_view   = kvsymdb::buffer_view;
 
     if (!out_errno_p) return KVSYMDB_FAILED;
     *out_errno_p = _intrnl::error_code::NOERROR;
@@ -208,15 +208,13 @@ extern "C" int kvsymdb_compact(
             &entview
         );
 
-        key.data    = entview.name;
-        key.size    = entview.name_len;
-        val.data    = entview.data;
-        val.size    = entview.data_len;
+        key.set(key.length(), key.data());
+        val.set(val.length(), val.data());
 
         int rc = kvsymdb_insert(
             &new_symdb_p,
-            &key,
-            &val,
+            &key._base(),
+            &val._base(),
             entview.hash,
             entview.type,
             out_errno_p
@@ -263,8 +261,8 @@ extern "C" int kvsymdb_insert(
         );
 
     if (
-        !key_p->data || !key_p->size ||
-        !val_p->data || !val_p->size
+        !key_p->buf_data || !key_p->buf_size ||
+        !val_p->buf_data || !val_p->buf_size
     )
         RETURN_FAILED_STAT_WITH_ERRNO(
             out_errno_p,
@@ -319,22 +317,22 @@ extern "C" int kvsymdb_insert(
     ent_header_p->id            = symdb_p->_entrycnt;
     ent_header_p->hash          = key_hash;
     ent_header_p->type          = type;
-    ent_header_p->name_len      = key_p->size;
-    ent_header_p->data_len      = val_p->size;
+    ent_header_p->name_len      = key_p->buf_size;
+    ent_header_p->data_len      = val_p->buf_size;
     ent_header_p->record_len    = entsize;
     
     
     uint32_t key_size_aligned = _intrnl::align::\
-        cstr_size_aligned<kvsymdb::ALIGN_SIZE>(key_p->size);
+        cstr_size_aligned<kvsymdb::ALIGN_SIZE>(key_p->buf_size);
 
     uint8_t *dest_p = ent_header_p->payload;
-    memcpy(dest_p, key_p->data, key_p->size);
-    dest_p[key_p->size] = '\0'; // zero termination
+    memcpy(dest_p, key_p->buf_data, key_p->buf_size);
+    dest_p[key_p->buf_size] = '\0'; // zero termination
 
     uint32_t data_size_aligned =
-        _intrnl::align::blob_size_aligned<kvsymdb::ALIGN_SIZE>(val_p->size);
+        _intrnl::align::blob_size_aligned<kvsymdb::ALIGN_SIZE>(val_p->buf_size);
     dest_p = ent_header_p->payload + key_size_aligned;
-    memcpy(dest_p, val_p->data, val_p->size);
+    memcpy(dest_p, val_p->buf_data, val_p->buf_size);
     symdb_p->_buf_len += entsize;
 
     assert(
@@ -538,14 +536,14 @@ int kvsymdb_reader_bind(
     // kvsymdb_t verification required
     if (!out_errno_p) return KVSYMDB_FAILED;
     *out_errno_p = _intrnl::error_code::NOERROR;
-    if (!reader_p || !arena_view_p || !arena_view_p->data)
+    if (!reader_p || !arena_view_p || !arena_view_p->buf_data)
         RETURN_FAILED_STAT_WITH_ERRNO(
             out_errno_p,
             _intrnl::error_code::ERR_NULLPTR
         );
 
-    reader_p->_arena_view.data  = arena_view_p->data;
-    reader_p->_arena_view.size  = arena_view_p->size;
+    reader_p->_arena_view.buf_data  = arena_view_p->buf_data;
+    reader_p->_arena_view.buf_size  = arena_view_p->buf_size;
     reader_p->_entc = entry_count; 
     reader_p->_pos  = 0u;
 
@@ -564,7 +562,7 @@ const kvsymdb_entry_t *kvsymdb_reader_read(
     const kvsymdb_entry_t *ent_p = nullptr;
     uint32_t min_reclen{};
 
-    if (!reader_p || !reader_p->_arena_view.data) {
+    if (!reader_p || !reader_p->_arena_view.buf_data) {
         *out_errno_p = _intrnl::error_code::ERR_NULLPTR;
         goto failed;
     }
@@ -581,14 +579,14 @@ const kvsymdb_entry_t *kvsymdb_reader_read(
     // checking is _pos + min_reclen <= than buf_len so 
     // the rec header is safe for deref (not guaranteed for payload yet)
     min_reclen = sizeof(kvsymdb_record_header_t);
-    if (reader_p->_pos + min_reclen > reader_p->_arena_view.size) {
-        reader_p->_pos = reader_p->_arena_view.size; // EOF
+    if (reader_p->_pos + min_reclen > reader_p->_arena_view.buf_size) {
+        reader_p->_pos = reader_p->_arena_view.buf_size; // EOF
         *out_errno_p = _intrnl::error_code::ERR_RDEOF;
         goto failed;
     }
 
     ent_p = reinterpret_cast<const kvsymdb_entry_t*>(
-        static_cast<const uint8_t*>(reader_p->_arena_view.data) + reader_p->_pos
+        static_cast<const uint8_t*>(reader_p->_arena_view.buf_data) + reader_p->_pos
     );
 
     if (
@@ -604,13 +602,13 @@ const kvsymdb_entry_t *kvsymdb_reader_read(
         // i.e. The payload is out of bound / truncated
         // to be safe we set _pos to _buf_len (guaranteed EOF)
 
-        reader_p->_pos = reader_p->_arena_view.size;
+        reader_p->_pos = reader_p->_arena_view.buf_size;
         *out_errno_p = _intrnl::error_code::ERR_BADENT;
         goto failed;
     }
    
     reader_p->_pos += ent_p->record_len;    
-    assert(reader_p->_pos <= reader_p->_arena_view.size);
+    assert(reader_p->_pos <= reader_p->_arena_view.buf_size);
 
     return ent_p;
 failed:
@@ -634,8 +632,8 @@ void kvsymdb_reader_unbind(
     kvsymdb_reader_t   *reader_p
 ) {
     if (reader_p) {
-        reader_p->_arena_view.data = nullptr;
-        reader_p->_arena_view.size = 0UL;
+        reader_p->_arena_view.buf_data = nullptr;
+        reader_p->_arena_view.buf_size = 0UL;
         reader_p->_entc = 0u;
         reader_p->_pos  = 0u;
     }
@@ -697,7 +695,7 @@ int kvsymdb::hash_index::remove(const entry *ent_p) {
     entry_view ent_view{};
     _intrnl::get_entry_view(ent_p, &ent_view);
 
-    string_view key_view(ent_view.name, ent_view.name_len);
+    string_view key_view(ent_view.name_len, ent_view.name);
     lookup_result lu_res{};
     int rc = this->m_base.lookup(key_view, key_view.hash32(), &lu_res);
     if (rc == KVSYMDB_FAILED) return rc;
@@ -787,7 +785,7 @@ kvsymdb_hidx_lookup(
     using string_view = kvsymdb::kvsymdb::string_view;
 
     const kvsymdb_entry_t *ent_p = 
-        c_hidx_p->_kvsymdb_hidx.get(static_cast<const string_view&>(*key_p));
+        c_hidx_p->_kvsymdb_hidx.get(string_view(*key_p));
 
     *out_errno_p = c_hidx_p->_kvsymdb_hidx.geterror();
 
@@ -940,6 +938,89 @@ public:
     }
 };
 
+extern "C"
+int kvsymdb_file_builder_dump(
+    const kvsymdb_t    *symdb_p,
+    const char         *filename,
+    int                *out_errno_p
+) {
+    if (!out_errno_p) return KVSYMDB_FAILED;
+    *out_errno_p = _intrnl::error_code::NOERROR;
+
+    if (!filename) {
+        *out_errno_p = _intrnl::error_code::ERR_NULLPTR;
+        return KVSYMDB_FAILED;
+    }
+
+    CXX_FILE db_file(fopen(filename, "wb"));
+    if (!db_file.is_open()) {
+        dbg_log_msg("");
+        dbg_print("fopen failed: %s", strerror(errno));
+        *out_errno_p = _intrnl::error_code::ERR_FOPEN;
+        return KVSYMDB_FAILED;
+    }
+
+    kvsymdb::self_state dbst{};
+    int rc = kvsymdb_get_intrnl_state_view(symdb_p, &dbst, out_errno_p);
+    if (rc) {
+        dbg_log_msg("");
+        dbg_print(
+            "kvsymdb_get_intrnl_state_view failed: %s",
+            _intrnl::strerror(*out_errno_p)
+        );
+        *out_errno_p = _intrnl::error_code::ERR_DBST;
+        return KVSYMDB_FAILED;
+    }
+
+    fseek(db_file.get(), sizeof(kvsymdb::file_header), SEEK_SET);
+    if (
+        fwrite(
+            dbst.arena_buf,
+            sizeof(uint8_t),
+            dbst.buf_len,
+            db_file.get()
+        ) != dbst.buf_len
+    ) {
+        dbg_log_msg("fwrite: failed to write payload");
+        *out_errno_p = _intrnl::error_code::ERR_IOFWRITE;
+        return KVSYMDB_FAILED;
+    }
+
+    auto calc_crc32 = [](const void *buf, uint32_t buf_len) {
+        uint32_t crc = static_cast<uint32_t>(::crc32(0UL, Z_NULL, 0u));
+        return static_cast<uint32_t>(
+            ::crc32(crc, static_cast<const uint8_t*>(buf), buf_len)
+        );
+    };
+
+    kvsymdb::file_header fhdr = {
+        .fh_magic   = _intrnl::FILE_MAGIC,
+        .fh_version = _intrnl::FILE_VERSION,
+        .fh_align   = _intrnl::FILE_ALIGN,
+        .fh_entcnt  = dbst.ent_count,
+        .fh_buflen  = dbst.buf_len,
+        .fh_crc32   = calc_crc32(dbst.arena_buf, dbst.buf_len),
+    };
+
+    fseek(db_file.get(), 0L, SEEK_SET);
+    if (
+        fwrite(
+            &fhdr,
+            sizeof(uint8_t),
+            sizeof(kvsymdb::file_header),
+            db_file.get()
+        ) != sizeof(kvsymdb::file_header)
+    ) {
+        dbg_log_msg("fwrite: failed to write header");
+        *out_errno_p = _intrnl::error_code::ERR_IOFWRITE;
+        return KVSYMDB_FAILED;
+    }
+
+    return KVSYMDB_SUCCESS;
+}
+
+
+/*
 int kvsymdb::file_builder::dump(const char *filename) {
     CXX_FILE db_file(fopen(filename, "wb"));
 
@@ -1007,7 +1088,7 @@ int kvsymdb::file_builder::dump(const char *filename) {
 
     return KVSYMDB_SUCCESS;
 }
-
+*/
 
 extern "C"
 kvsymdb_file_reader_t *
