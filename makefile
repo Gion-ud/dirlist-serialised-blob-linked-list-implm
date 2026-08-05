@@ -1,6 +1,8 @@
 #all: keylist.o tskl
-all: build/kvsymdb.o bin/readsym bin/tssym #bin/symdb
+#all: build/kvsymdb.o bin/readsym bin/tssym #bin/symdb
 #all: bin/list add_bin_path
+
+all: build/jwkvmap.o bin/jwkv add_bin_path
 
 _C_CXX_FLAGS = -O2 -Wall -Wextra -fno-exceptions \
 	-fno-strict-aliasing -D_DEBUG #-DNDEBUG -g
@@ -25,6 +27,14 @@ tspool: tests/tspool.c src/vector.c src/pool_alloc.c | build
 
 build/kvsymdb.o: src/kvsymdb.cxx | build
 	cc -c $< -o $@ $(CXXFLAGS) -Iinclude -Isrc
+
+
+build/jwkvmap.o: src/jwkvmap.cxx | build
+	cc -c $< -o $@ $(CXXFLAGS) -Iinclude -Isrc
+
+bin/jwkv: build/jwkvmap.o tests/jwkv.cxx | bin
+	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s
+
 
 bin/readsym: build/kvsymdb.o tests/readsym.cxx | bin
 	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman
