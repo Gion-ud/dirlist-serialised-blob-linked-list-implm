@@ -190,10 +190,14 @@ using u32_lower_hex_fmt = u32_hex_fmt<U32_HEX_LOWER_FMT>;
 
 
 inline std::ostream &operator<<(std::ostream &os_ref, const buffer_view &bufview_ref) noexcept {
-    os_ref.write(
-        static_cast<const char*>(bufview_ref.data()),
-        bufview_ref.length()
-    );
+    if (!bufview_ref.data()) {
+        std::cout << "(null)";
+    } else {
+        os_ref.write(
+            static_cast<const char*>(bufview_ref.data()),
+            bufview_ref.length()
+        );
+    }
     return os_ref;
 }
 
@@ -444,6 +448,11 @@ public:
         const buffer_view  &val_view_ref,
         uint32_t            type
     ) noexcept;
+    int upsert(
+        const buffer_view  &key_view_ref,
+        const buffer_view  &val_view_ref,
+        uint32_t            type
+    ) noexcept;
     const EntryHeader *find(const buffer_view &key_view_ref) noexcept;
     int erase(LookupHandle &luh_ref) noexcept;
     int remove(const buffer_view &key_view_ref) noexcept;
@@ -465,7 +474,7 @@ public:
         return this->m_slot_cnt;
     }
 
-    int insert_auto_rehash(
+    int upsert_auto_rehash(
         const buffer_view  &key_view_ref,
         const buffer_view  &val_view_ref,
         uint32_t            type
@@ -477,7 +486,7 @@ public:
             int rc = this->rehash(new_slotc);
             if (rc != JWKVMAP_OK) return JWKVMAP_FAILED;
         }
-        return this->insert(
+        return this->upsert(
             key_view_ref,
             val_view_ref,
             type
@@ -486,6 +495,55 @@ public:
     KVErrorCode geterror() const noexcept {
         return this->m_errno;
     }
+
+    struct BucketArrIter;
+
+    struct BucketChainIter {
+    private:
+        Bucket     *m_bucket_p;
+        SlotLink   *m_slot_ln_p;
+    public:
+        BucketChainIter(Bucket *bucket_p) noexcept :
+            m_bucket_p((bucket_p->size()) ? bucket_p : nullptr),
+            m_slot_ln_p(nullptr)
+        {
+        }
+
+        const EntryHeader *next_entry() noexcept {
+            if (!m_bucket_p) return nullptr;
+            if (!m_slot_ln_p) {
+                m_slot_ln_p = m_bucket_p->chain_begin();
+                return SlotHandle(m_slot_ln_p).header();
+            }
+            m_slot_ln_p = m_slot_ln_p->ln_next_p;
+
+            return (m_slot_ln_p == m_bucket_p->chain_end())
+                ? nullptr : SlotHandle(m_slot_ln_p).header();
+        }
+    };
+
+    struct BucketArrIter {
+    private:
+        KVMap  *m_kvm_p;
+        Bucket *m_bucket_p;
+    public:
+        BucketArrIter(KVMap &kvm_ref) noexcept :
+            m_kvm_p(&kvm_ref),
+            m_bucket_p()
+        {
+        }
+        Bucket *next_bucket() {
+            if (!m_bucket_p) {
+                m_bucket_p = m_kvm_p->_bucket_arr_begin();
+                return m_bucket_p;
+            }
+            ++m_bucket_p;
+            return (m_bucket_p != m_kvm_p->_bucket_arr_end())
+                ? m_bucket_p : nullptr;
+        }
+
+    };
+
 
     struct EntryView;
 }; // KVMap
@@ -514,8 +572,8 @@ struct KVMap::EntryView : private KVMap::c_EntryView {
     const c_EntryView *_base() const noexcept {
         return this;
     }
-    const string_view key() const noexcept {
-        return string_view(this->ev_key_p, ev_ehdr_p->eh_key_len);
+    const buffer_view key() const noexcept {
+        return buffer_view(this->ev_key_p, ev_ehdr_p->eh_key_len);
     }
     const buffer_view value() const noexcept {
         return buffer_view(this->ev_val_p, ev_ehdr_p->eh_val_len);

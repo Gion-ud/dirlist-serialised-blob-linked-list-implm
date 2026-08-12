@@ -5,36 +5,35 @@
 
 namespace kvsymdb_print {
     using namespace cxx_kvsymdb;
-    inline void print_entry_view(kvsymdb::entry_view &entview_r) {
+    inline void print_entry_view(const kvsymdb::entry_view &entview_ref) {
         printf(
             "{\n"
-            "\tid=%u,\n"
-            "\thash=0x%.8X,\n"
-            "\ttype=0x%.4X,\n"
-            "\tname_len=%u,\n"
-            "\tname='%s',\n"
-            "\tdata_len=%u,\n"
-            "\tdata='%.*s',\n"
-            "\taddr=%p\n"
+            "\t%-12s: %u,\n"
+            "\t%-12s: 0x%.8X,\n"
+            "\t%-12s: 0x%.4X,\n"
+            "\t%-12s: %u,\n"
+            "\t%-12s: \"%.*s\",\n"
+            "\t%-12s: %u,\n"
+            "\t%-12s: \"%.*s\"\n"
             "}\n",
-            entview_r.id, entview_r.hash, entview_r.type,
-            entview_r.name_len,
-            static_cast<const char*>(entview_r.name),
-            entview_r.data_len,
-            static_cast<int>(entview_r.data_len),
-            static_cast<const char*>(entview_r.data),
-            entview_r._record
+            "id",       entview_ref.id,
+            "hash",     entview_ref.hash,
+            "type",     entview_ref.type,
+            "name_len", entview_ref.name_len,
+            "name",     static_cast<int>(entview_ref.name_len), static_cast<const char*>(entview_ref.name),
+            "data_len", entview_ref.data_len,
+            "data",     static_cast<int>(entview_ref.data_len), static_cast<const char*>(entview_ref.data)
         );
     }
-    inline void print_ent_kv(kvsymdb::entry_view &entview_r) {
+    inline void print_ent_kv(const kvsymdb::entry_view &entview_ref) {
         printf(
             "[%u] (0x%.8X, '%.*s', '%.*s')\n",
-            entview_r.id,
-            entview_r.hash,
-            static_cast<int>(entview_r.name_len),
-            static_cast<const char*>(entview_r.name),
-            static_cast<int>(entview_r.data_len),
-            static_cast<const char*>(entview_r.data)
+            entview_ref.id,
+            entview_ref.hash,
+            static_cast<int>(entview_ref.name_len),
+            static_cast<const char*>(entview_ref.name),
+            static_cast<int>(entview_ref.data_len),
+            static_cast<const char*>(entview_ref.data)
         );
     }
     inline std::ostream &operator<<(

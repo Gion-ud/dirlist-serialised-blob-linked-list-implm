@@ -309,6 +309,56 @@ int KVMap::insert(
     return JWKVMAP_OK;
 }
 
+int KVMap::upsert(
+    const buffer_view  &key_view_ref,
+    const buffer_view  &val_view_ref,
+    uint32_t            type
+) {
+    if (!this->is_init()) {
+        std::cerr
+            << LOG_ERROR "KVMap::upsert failed: ht uninitialised"
+            << std::endl;
+        this->m_errno = KVErrorCode::ERR_UNINIT;
+        return JWKVMAP_FAILED;
+    }
+    assert(this->bucket_count());
+
+    hash32_t key_hash = hash32(key_view_ref);
+    Slot *slot_p = this->_create_slot(
+        key_view_ref,
+        val_view_ref,
+        key_hash,
+        type        
+    );
+    if (!slot_p) {
+        std::cerr
+            << LOG_ERROR "KVMap::upsert: this->_create_entry failed: "
+            << KVError(this->m_errno).strerror()
+            << std::endl;
+        this->m_errno = KVErrorCode::ERR_CREATE_ENT;
+        return JWKVMAP_FAILED;
+    }
+
+    Bucket *bucket_p = this->_bucket_arr_begin() + key_hash % this->m_bucket_cnt;
+
+    LookupHandle luh{};
+    int rc = this->_lookup_slot(
+        key_view_ref,
+        key_hash,
+        &luh
+    );
+
+    if (rc == JWKVMAP_OK) {
+        bucket_p->unlink_slot(luh.slot_p);
+        this->_destroy_slot(luh.slot_p);
+    }
+
+    auto *ret = bucket_p->push_slot(slot_p);
+    assert(ret);
+
+    return JWKVMAP_OK;
+}
+
 const KVMap::EntryHeader *KVMap::find(const buffer_view &key_view_ref) {
     if (!this->is_init()) {
         std::cerr

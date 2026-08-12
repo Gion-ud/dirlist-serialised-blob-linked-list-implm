@@ -278,10 +278,10 @@ extern "C" int kvsymdb_insert(
 
     _intrnl::assert_intrnl_state(symdb_p);
 
-    uint32_t entsize = _intrnl::align::\
+    uint32_t entsize = _intrnl::align::
         entsize_required<kvsymdb::ALIGN_SIZE>(key_p, val_p);
 
-    bool is_aligned = align_utils::\
+    bool is_aligned = align_utils::
         is_aligned_off<uint32_t, kvsymdb::ALIGN_SIZE>(entsize);
     assert(is_aligned);
 
@@ -293,7 +293,7 @@ extern "C" int kvsymdb_insert(
             symdb_p->_buf_size, new_bufsize
         );
 
-        int rc = _intrnl::\
+        int rc = _intrnl::
             reserve_arenabuf(&symdb_p, new_bufsize, out_errno_p);
         if (rc < 0)
             RETURN_FAILED_STAT_WITH_ERRNO(
@@ -307,7 +307,7 @@ extern "C" int kvsymdb_insert(
 
     uint32_t ent_off = symdb_p->_buf_len;
 
-    is_aligned = align_utils::\
+    is_aligned = align_utils::
         is_aligned_off<uint32_t, kvsymdb::ALIGN_SIZE>(ent_off);
     assert(is_aligned);
 
@@ -322,7 +322,7 @@ extern "C" int kvsymdb_insert(
     ent_header_p->record_len    = entsize;
     
     
-    uint32_t key_size_aligned = _intrnl::align::\
+    uint32_t key_size_aligned = _intrnl::align::
         cstr_size_aligned<kvsymdb::ALIGN_SIZE>(key_p->buf_size);
 
     uint8_t *dest_p = ent_header_p->payload;

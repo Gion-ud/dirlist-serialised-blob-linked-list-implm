@@ -1,8 +1,8 @@
 #all: keylist.o tskl
-#all: build/kvsymdb.o bin/readsym bin/tssym #bin/symdb
+all: build/kvsymdb.o bin/readsym bin/symput bin/mksym bin/symdel add_bin_path # bin/tssym bin/symdb
 #all: bin/list add_bin_path
 
-all: build/jwkvmap.o bin/jwkv add_bin_path
+#all: build/jwkvmap.o bin/jwkv add_bin_path
 
 _C_CXX_FLAGS = -O2 -Wall -Wextra -fno-exceptions \
 	-fno-strict-aliasing -D_DEBUG #-DNDEBUG -g
@@ -38,6 +38,17 @@ bin/jwkv: build/jwkvmap.o tests/jwkv.cxx | bin
 
 bin/readsym: build/kvsymdb.o tests/readsym.cxx | bin
 	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman
+
+bin/symput: build/kvsymdb.o tests/symput.cxx | bin
+	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman
+
+bin/mksym: build/kvsymdb.o tests/mksym.cxx | bin
+	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman
+
+bin/symdel: build/kvsymdb.o tests/symdel.cxx | bin
+	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman
+
+
 
 bin/tssym: build/kvsymdb.o tests/tssym.cxx | bin
 	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman

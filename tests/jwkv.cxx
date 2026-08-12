@@ -44,28 +44,28 @@ namespace jwkvmap_tests {
     }
 
     template<std::size_t ArrLen>
-    inline int insert_auto_rehash_from_kvarr(
+    inline int upsert_from_kvarr_auto_rehash(
         KVMap  &kvm_ref,
         const c_array::array_view<const cstr_kv, ArrLen> &kvarr_ref
     ) noexcept {
         using namespace fmt;    
-        std::clog << "[INFO] insert_auto_rehash_from_kvarr @ BEGIN" << std::endl;
+        std::clog << "[INFO] upsert_from_kvarr_auto_rehash @ BEGIN" << std::endl;
         for (const auto &ent_ref : kvarr_ref) {
             std::cout << "[INFO] it " << &ent_ref - kvarr_ref.begin() << std::endl;
-            auto rc = kvm_ref.insert_auto_rehash(
+            auto rc = kvm_ref.upsert_auto_rehash(
                 ent_ref.name,
                 ent_ref.data,
                 KVSIG
             );
             if (rc) {
                 std::cerr
-                    << "kvm.insert_auto_rehash failed: "
+                    << "kvm.upsert_auto_rehash failed: "
                     << KVError(kvm_ref.geterror())
                     << std::endl;
                 return JWKVMAP_FAILED;
             }
         }
-        std::clog << "[INFO] insert_auto_rehash_from_kvarr @ END\n" << std::endl;
+        std::clog << "[INFO] upsert_from_kvarr_auto_rehash @ END\n" << std::endl;
         return JWKVMAP_OK;
     }
 
@@ -147,6 +147,56 @@ namespace jwkvmap_tests {
         return os_ref;
     }
 
+    struct KVPairFmt {
+    private:
+        const KVMap::EntryView  m_entview;
+        const char             *m_dict_name;
+    public:
+        KVPairFmt(
+            const KVMap::EntryHeader   *enthdr_p
+        ) noexcept :
+            m_entview(enthdr_p),
+            m_dict_name(nullptr)
+        {
+        }
+        KVPairFmt(
+            const char                 *dict_name,
+            const KVMap::EntryHeader   *enthdr_p
+        ) noexcept :
+            m_entview(enthdr_p),
+            m_dict_name(dict_name)
+        {
+        }
+        friend std::ostream &operator<<(
+            std::ostream       &os_ref,
+            const KVPairFmt    &fmt_ref
+        );
+    };
+
+    std::ostream &operator<<(
+        std::ostream       &os_ref,
+        const KVPairFmt    &fmt_ref
+    ) {
+        using fmt::operator<<;
+        if (fmt_ref.m_dict_name)
+            os_ref
+                << fmt_ref.m_dict_name
+                << "[\""
+                << fmt_ref.m_entview.key()
+                << "\"] = \""
+                << fmt_ref.m_entview.value()
+                << "\"";
+        else
+            os_ref
+                << "\""
+                << fmt_ref.m_entview.key()
+                << "\" -> \""
+                << fmt_ref.m_entview.value()
+                << "\"";
+        return os_ref;
+    }
+
+
 }
 
 static constexpr jwkvmap_tests::cstr_kv _rec_arr[] = {
@@ -184,13 +234,15 @@ int main() {
 
     std::cout << "1. -----[INIT]-----"  << std::endl;
     jwkvmap::KVMap kvm{};
-    kvm.reserve(8UL);
+
+    kvm.reserve(8u);
     std::cout << KVMapSizeFmt(kvm) << std::endl;
 
     std::cout << "2. -----insert all-----"  << std::endl;
     int rc = insert_from_kvarr(kvm, kvarr);
     assert(!rc);
     std::cout << std::endl;
+
 
     std::cout << "3. -----insert all again-----"  << std::endl;
     rc = insert_from_kvarr(kvm, kvarr);
@@ -203,12 +255,38 @@ int main() {
     std::cout << std::endl;
     std::cout << KVMapSizeFmt(kvm) << std::endl;
 
+    {
+        KVMap::BucketArrIter buc_arr_it(kvm);
+        decltype(buc_arr_it.next_bucket()) buc_p = nullptr;
+
+        while ((buc_p = buc_arr_it.next_bucket()) != nullptr) {
+            std::cout
+                << "["
+                << buc_p - kvm.bucket_arr_begin()
+                << "] "
+                "<jwkvmap::KVMap::Bucket@"
+                << buc_p
+                << ">"
+                << "\n";
+
+            if (!buc_p->size()) continue;
+            KVMap::BucketChainIter chain_it(buc_p);
+            decltype(chain_it.next_entry()) ent_p = nullptr;
+            while ((ent_p = chain_it.next_entry()) != nullptr) {
+                std::cout << KVPairFmt("dict", ent_p) << "\n";
+            }
+            std::cout << "\n";
+        }
+    }
+    std::cout << std::endl;
+
+
     std::cout << "5.----------delete"  << std::endl;
     rc = find_and_remove_keys(kvm, kvarr);
     assert(!rc);
 
     std::cout << "6.---------rehash and put"  << std::endl;
-    rc = insert_auto_rehash_from_kvarr(kvm, kvarr);
+    rc = upsert_from_kvarr_auto_rehash(kvm, kvarr);
     assert(!rc);
     std::cout << std::endl;
 
@@ -217,6 +295,18 @@ int main() {
     assert(!rc);
     std::cout << std::endl;
     std::cout << KVMapSizeFmt(kvm) << std::endl;
+
+
+    kvm.upsert("open", "POSIX open", KVSIG);
+
+    std::cout << KVPairFmt(kvm["open_"]) << std::endl;
+    std::cout << KVPairFmt(kvm["open"]) << std::endl;
+    std::cout << KVPairFmt(kvm["close"]) << std::endl;
+    std::cout << KVPairFmt(kvm["_close"]) << std::endl;
+    std::cout << KVPairFmt(kvm["read"]) << std::endl;
+    std::cout << KVPairFmt(kvm["write"]) << std::endl;
+    std::cout << KVPairFmt(kvm["lseek"]) << std::endl;
+
 
     return 0;
 }

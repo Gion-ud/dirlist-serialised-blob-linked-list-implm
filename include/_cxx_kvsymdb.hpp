@@ -164,6 +164,13 @@ public:
             &this->m_errno
         );
     }
+    int insert(const entry_view &entview_ref) noexcept {
+        return this->insert(
+            string_view(entview_ref.name_len, entview_ref.name),
+            buffer_view(entview_ref.data_len, entview_ref.data),
+            entview_ref.type
+        );
+    }
     int mark_dead(entry *ent_p) noexcept {
         return kvsymdb_mark_dead(
             this->m_symdb_p,
