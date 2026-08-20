@@ -98,6 +98,10 @@ public:
     {
         this->m_symdb_p = create_kvsymdb(entc, INIT_BUFSIZE, &this->m_errno);
     }
+    /*
+    kvsymdb(const char *) noexcept : m_symdb_p(nullptr), m_errno(0) {
+    }
+    */
     ~kvsymdb() noexcept {
         this->_cleanup();
     }
@@ -492,6 +496,141 @@ public:
         return kvsymdb_reader_rewind(this);
     }
 };
+
+struct _intrnl::hash_index {
+    using slot  = kvsymdb_hidx_slot_t;
+    struct bucket {
+        slot   *chain_head_p;
+    };
+    struct lookup_result {
+        bucket *bucket_p;
+        slot   *slot_p;
+    };
+    friend struct kvsymdb::hash_index;
+
+private:
+    struct pool {
+        union entry {
+            slot   *next_free_p;    // free list ptr
+            slot    slot;           // slot
+        };
+
+        entry      *m_entry_arr;    // [0]; slot arr; union
+        entry      *m_free_head_p;  // [1]; free head
+        uint32_t    m_size;         // [2]; pool size
+        uint32_t    m_capacity;     // [3]; pool capacity
+        int         m_errno;        // [4]; errno
+
+        inline pool() noexcept :
+            m_entry_arr(nullptr),
+            m_free_head_p(nullptr),
+            m_size(0u),
+            m_capacity(0u),
+            m_errno(0)
+        {
+        }
+
+        int init(uint32_t pool_size) noexcept;
+        void _cleanup() noexcept;
+        slot *new_slot() noexcept;
+        int free_slot(slot *slot_p) noexcept;
+
+        pool(const pool &other_ref) = delete;
+        pool& operator=(const pool &other_ref) = delete;
+        ~pool() noexcept = default;
+    };
+
+    const kvsymdb_t    *m_c_symdb_p;    // [0]
+    pool                m_pool;         // [1]
+    bucket             *m_bucket_arr;   // [2]
+    uint32_t            m_bucket_cnt;   // [3]
+    int                 m_errno;        // [4]
+
+    int init(
+        const kvsymdb_t    *c_symdb_p,
+        uint32_t            bucket_cnt,
+        uint32_t            slot_cnt
+    ) noexcept;
+    void _cleanup() noexcept;
+
+    int insert(const kvsymdb::entry *ent_p) noexcept;
+    int lookup(
+        const kvsymdb::buffer_view &key_ref,
+        uint32_t                    key_hash,
+        lookup_result              *out_res_p
+    ) noexcept;
+    int remove(lookup_result *lu_res_p) noexcept;
+
+    inline hash_index() noexcept :
+        m_c_symdb_p(nullptr),
+        m_pool{},
+        m_bucket_arr(nullptr),
+        m_bucket_cnt(0u),
+        m_errno(0)
+    {
+    }
+    inline ~hash_index() noexcept {
+        this->_cleanup();
+    }
+    inline hash_index(const hash_index &other_ref) = delete;
+    inline hash_index& operator=(const hash_index &other_ref) = delete;
+};
+
+struct kvsymdb::hash_index {
+private:
+    using lookup_result = _intrnl::hash_index::lookup_result;
+
+    _intrnl::hash_index m_base;
+
+public:
+    int _init(
+        const kvsymdb_t    *symdb_p,
+        uint32_t            capacity
+    ) noexcept;
+
+
+    const char *errmsg() const noexcept {
+        return kvsymdb_strerror(this->m_base.m_errno);
+    }
+    int geterror() {
+        return this->m_base.m_errno;
+    }
+    void clearerr() {
+        this->m_base.m_errno = 0;
+    }
+    bool is_init() const noexcept {
+        return (!!this->m_base.m_c_symdb_p);
+    }
+
+    int insert(const entry *ent_p) noexcept;
+    const entry *get(const string_view &key_ref) noexcept;
+    const entry *get(const char *key_cstr) noexcept {
+        return this->get(string_view(key_cstr));
+    }
+    const entry *operator[](const string_view &key_ref) noexcept {
+        return this->get(key_ref);
+    }
+    const entry *operator[](const char *key_cstr) noexcept {
+        return this->get(key_cstr);
+    }
+
+    int remove(const entry *ent_p) noexcept;
+
+    int init(
+        const kvsymdb  &symdb_ref,
+        uint32_t        capacity
+    ) noexcept;
+
+    hash_index() noexcept : m_base{} {
+    }
+
+    ~hash_index() noexcept = default;
+    hash_index(const hash_index &other_ref) = delete;
+    hash_index& operator=(const hash_index &other_ref) = delete;
+
+
+};
+
 
 } // namespace cxx_kvsymdb 
 

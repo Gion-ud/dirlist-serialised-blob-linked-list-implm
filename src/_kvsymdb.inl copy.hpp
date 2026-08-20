@@ -431,6 +431,265 @@ inline bool is_valid_file_header(
     // og: fhdr_p->fh_buflen == filesize - sizeof(kvsymdb_file_header_t)
 }
 
+
+
+// hash_index::pool impl
+inline int hash_index::pool::init(uint32_t pool_size) {
+    assert(pool_size);
+    this->m_errno = error_code::NOERROR;
+
+    this->m_entry_arr = static_cast<entry*>(
+        operator new[](pool_size * sizeof(entry), std::nothrow)
+    );
+    if (!this->m_entry_arr) {
+        this->m_errno = error_code::ERR_OPNEWARR;
+        goto failed_ret;
+    }
+
+    for (uint32_t i = 0u; i < pool_size - 1; ++i) {
+        this->m_entry_arr[i].next_free_p =
+            reinterpret_cast<decltype(entry::next_free_p)>(
+                &this->m_entry_arr[i + 1]
+            );
+    }
+    this->m_entry_arr[pool_size - 1].next_free_p = nullptr;
+
+    this->m_free_head_p = &this->m_entry_arr[0];
+    this->m_size        = 0u;
+    this->m_capacity    = pool_size;
+
+    return KVSYMDB_SUCCESS;
+failed_ret:
+    return KVSYMDB_FAILED;
+}
+
+inline void hash_index::pool::_cleanup() {
+    if (this->m_entry_arr)
+        operator delete[](this->m_entry_arr);
+
+    this->m_entry_arr   = nullptr;
+    this->m_free_head_p = nullptr;
+    this->m_size        = 0u;
+    this->m_capacity    = 0u;
+    this->m_errno       = 0;
+}
+
+inline hash_index::slot *hash_index::pool::new_slot() {
+    this->m_errno = error_code::NOERROR;
+    if (this->m_size == this->m_capacity) {
+        this->m_errno = error_code::ERR_POOL_FULL;
+        return nullptr;
+    }
+
+    assert(this->m_size <= this->m_capacity);
+    assert(this->m_free_head_p);
+
+    slot *slot_p = reinterpret_cast<slot*>(this->m_free_head_p);
+    this->m_free_head_p = reinterpret_cast<entry*>(
+        this->m_free_head_p->next_free_p
+    );
+    ++this->m_size;
+
+    memset(slot_p, 0, sizeof(*slot_p));
+
+    return slot_p;
+}
+
+inline int hash_index::pool::free_slot(slot *slot_p) {
+    this->m_errno = error_code::NOERROR;
+    if (!slot_p) {
+        this->m_errno = error_code::ERR_NULLPTR;
+        return KVSYMDB_FAILED;
+    }
+
+    memset(slot_p, 0, sizeof(*slot_p));
+    entry *pool_ent_p = reinterpret_cast<entry*>(slot_p);
+    ptrdiff_t ent_idx = pool_ent_p - this->m_entry_arr;
+    if (
+        ent_idx < 0L ||
+        ent_idx >= static_cast<ptrdiff_t>(this->m_capacity)
+    ) {
+        this->m_errno = error_code::ERR_ADDR_OUT_OF_RANGE;
+        return KVSYMDB_FAILED;
+    }
+
+    ptrdiff_t ent_off =
+        reinterpret_cast<uint8_t*>(pool_ent_p) - 
+        reinterpret_cast<uint8_t*>(this->m_entry_arr);
+    
+    if (ent_off % sizeof(entry) != 0L) {
+        this->m_errno = error_code::ERR_PTR_UNALIGNED;
+        return KVSYMDB_FAILED;
+    }
+
+    assert(this->m_size <= this->m_capacity);
+    assert(this->m_size);
+
+    pool_ent_p->next_free_p = reinterpret_cast<slot*>(this->m_free_head_p);
+    this->m_free_head_p = pool_ent_p;
+    --this->m_size;
+
+    return KVSYMDB_SUCCESS;
+}
+
+
+
+// hash_index impl
+inline int hash_index::init(
+    const kvsymdb_t    *symdb_p,
+    uint32_t            bucket_cnt,
+    uint32_t            slot_cnt
+) {
+    assert(bucket_cnt && slot_cnt);
+    this->m_c_symdb_p = symdb_p;
+    this->m_errno = error_code::NOERROR;
+
+    // init pool
+    int rc = this->m_pool.init(slot_cnt);
+    if (rc) goto failed_ret;
+
+    // alloc && init bucket arr
+    this->m_bucket_arr = static_cast<bucket*>(
+        operator new[](bucket_cnt * sizeof(bucket), std::nothrow)
+    );
+    if (!this->m_bucket_arr){
+        this->m_errno = error_code::ERR_OPNEWARR;
+        goto failed_cleanup;
+    }
+
+    for (uint32_t i = 0u; i < bucket_cnt; ++i) {
+        this->m_bucket_arr[i].chain_head_p = nullptr;
+    }
+    this->m_bucket_cnt = bucket_cnt;
+
+    return KVSYMDB_SUCCESS;
+failed_cleanup:
+    this->_cleanup();   
+failed_ret:
+    return KVSYMDB_FAILED;
+}
+
+inline void hash_index::_cleanup() {
+    if (this->m_bucket_arr)
+        operator delete[](this->m_bucket_arr);
+
+    this->m_pool._cleanup();
+    this->m_c_symdb_p   = nullptr;
+    this->m_bucket_arr  = nullptr; 
+    this->m_bucket_cnt  = 0u;
+    this->m_errno       = 0;
+}
+
+inline int hash_index::insert(const kvsymdb::entry *ent_p) {
+    this->m_errno = error_code::NOERROR;
+    if (!ent_p) {
+        this->m_errno = error_code::ERR_NULLPTR;
+        return KVSYMDB_FAILED;
+    }
+
+    slot *slot_p = this->m_pool.new_slot();
+    if (!slot_p) {
+        this->m_errno = error_code::ERR_POOL_ALLOC;
+        return KVSYMDB_FAILED;
+    }
+
+    slot_p->ent_p       = ent_p;
+    slot_p->prev_slot_p = nullptr;
+    slot_p->next_slot_p = nullptr;    
+
+    uint32_t bucket_idx = ent_p->hash % this->m_bucket_cnt;
+    bucket *bucket_p = &this->m_bucket_arr[bucket_idx];
+
+    slot_p->next_slot_p = bucket_p->chain_head_p;
+    if (bucket_p->chain_head_p)
+        bucket_p->chain_head_p->prev_slot_p = slot_p;
+
+    bucket_p->chain_head_p = slot_p;
+
+    return KVSYMDB_SUCCESS;
+}
+
+inline int hash_index::lookup(
+    const kvsymdb::buffer_view &key_ref,
+    uint32_t                    hash,
+    lookup_result              *out_res_p
+) {
+    this->m_errno = error_code::NOERROR;
+    if (!out_res_p) {
+        this->m_errno = error_code::ERR_NULLPTR;
+        return KVSYMDB_FAILED;
+    }
+    if (!key_ref.data() || !key_ref.length()) {
+        this->m_errno = error_code::ERR_ENTVIEW;
+        return KVSYMDB_FAILED;
+    }
+
+    out_res_p->bucket_p = nullptr;
+    out_res_p->slot_p   = nullptr;
+
+    bucket *bucket_p = &this->m_bucket_arr[hash % this->m_bucket_cnt];
+    slot *slot_p = bucket_p->chain_head_p;
+
+    uint32_t probc = 0u;
+    while (probc < this->m_pool.m_size && slot_p) {
+        const kvsymdb::entry *ent_p = slot_p->ent_p;
+        if (ent_p->hash == hash) {
+            kvsymdb::entry_view view{};
+            get_entry_view(
+                ent_p,
+                &view
+            );
+            if (
+                key_ref.length() == view.name_len &&
+                memcmp(key_ref.data(), view.name, view.name_len) == 0
+            ) {
+                out_res_p->bucket_p = bucket_p;
+                out_res_p->slot_p   = slot_p;
+                return KVSYMDB_SUCCESS;
+            }
+        }
+
+        slot_p = slot_p->next_slot_p;
+        ++probc;
+    }
+
+    assert(!slot_p);
+
+    this->m_errno = error_code::ERR_KEY_NOT_FOUND;
+    return KVSYMDB_FAILED;
+}
+
+inline int hash_index::remove(lookup_result *lu_res_p) {
+    if (
+        !lu_res_p ||
+        !lu_res_p->bucket_p ||
+        !lu_res_p->slot_p ||
+        !lu_res_p->slot_p->ent_p
+    ) {
+        this->m_errno = error_code::ERR_BAD_HTLURES;
+        return KVSYMDB_FAILED;
+    }
+
+    assert(!lu_res_p->bucket_p->chain_head_p->prev_slot_p);
+    slot *old_slot_p = lu_res_p->slot_p;
+    bucket *bucket_p = lu_res_p->bucket_p;
+
+    if (old_slot_p->prev_slot_p) {
+        old_slot_p->prev_slot_p->next_slot_p = old_slot_p->next_slot_p;
+    } else {
+        assert(bucket_p->chain_head_p == old_slot_p);
+        bucket_p->chain_head_p = old_slot_p->next_slot_p;
+    }
+    if (old_slot_p->next_slot_p) {
+        old_slot_p->next_slot_p->prev_slot_p = old_slot_p->prev_slot_p;
+    }
+
+    int rc = this->m_pool.free_slot(old_slot_p);
+    assert(!rc);
+
+    return KVSYMDB_SUCCESS;
+}
+
 } // namespace _intrnl
 
 } // namespace cxx_kvsymdb 

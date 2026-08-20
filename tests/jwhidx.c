@@ -6,7 +6,7 @@
 #include <fnv1a_hash.h>
 #include "dbg_print.h"
 
-#define JW_NULL_IDX -1
+#define JW_NULL_IDX UINT32_MAX
 
 typedef struct {
     char   *e_name;
@@ -15,7 +15,7 @@ typedef struct {
 
 typedef struct {
     uint32_t    s_hash;
-    int         s_idx;
+    uint32_t    s_idx;
 } jwkv_hidx_slot_t;
 
 typedef struct {

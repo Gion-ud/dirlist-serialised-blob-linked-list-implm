@@ -645,6 +645,171 @@ const char *kvsymdb_strerror(int kvsymdb_errno) {
     return _intrnl::strerror(kvsymdb_errno);
 }
 
+
+int kvsymdb::hash_index::init(
+    const kvsymdb  &symdb_ref,
+    uint32_t        capacity
+) {
+    return this->m_base.init(
+        symdb_ref.m_symdb_p,
+        capacity,
+        capacity
+    );
+}
+
+int kvsymdb::hash_index::_init(
+    const kvsymdb_t    *symdb_p,
+    uint32_t            capacity
+) {
+    return this->m_base.init(
+        symdb_p,
+        capacity,
+        capacity
+    );
+}
+
+int kvsymdb::hash_index::insert(const entry *ent_p) {
+    return this->m_base.insert(ent_p);
+}
+
+const kvsymdb::entry *kvsymdb::hash_index::get(
+    const string_view  &key_ref
+) {
+    lookup_result res{};
+    int rc = this->m_base.lookup(
+        key_ref,
+        key_ref.hash32(),
+        &res
+    );
+    return (rc == KVSYMDB_FAILED) ? nullptr : res.slot_p->ent_p;
+}
+
+
+
+int kvsymdb::hash_index::remove(const entry *ent_p) {
+    if (!_intrnl::is_valid_entry(this->m_base.m_c_symdb_p, ent_p)) {
+        this->m_base.m_errno = _intrnl::error_code::ERR_BADENT;
+        return KVSYMDB_FAILED;
+    }
+
+    entry_view ent_view{};
+    _intrnl::get_entry_view(ent_p, &ent_view);
+
+    string_view key_view(ent_view.name_len, ent_view.name);
+    lookup_result lu_res{};
+    int rc = this->m_base.lookup(key_view, key_view.hash32(), &lu_res);
+    if (rc == KVSYMDB_FAILED) return rc;
+
+    return this->m_base.remove(&lu_res);
+}
+
+
+// opaque c abi type; typedef struct _c_kvsymdb_hidx kvsymdb_hash_index_t;
+struct _c_kvsymdb_hidx {
+    kvsymdb::hash_index _kvsymdb_hidx;
+};
+
+extern "C" kvsymdb_hash_index_t *
+create_kvsymdb_hash_index(
+    const kvsymdb_t    *symdb_p,
+    int                *out_errno_p
+) {
+    if (!out_errno_p) return nullptr;
+    *out_errno_p = _intrnl::error_code::NOERROR;
+
+    if (!symdb_p) {
+        *out_errno_p = _intrnl::error_code::ERR_NULLPTR;
+        return nullptr;
+    }
+
+    _intrnl::assert_intrnl_state(symdb_p);
+
+    int rc = 0;
+    auto *c_hidx_p = new (std::nothrow) _c_kvsymdb_hidx();
+    if (!c_hidx_p) {
+        *out_errno_p = _intrnl::error_code::ERR_OPNEW;
+        goto failed_ret;
+    }
+
+    rc = c_hidx_p->_kvsymdb_hidx._init(
+        symdb_p, symdb_p->_entrycap
+    );
+    if (rc) goto failed_cleanup;
+
+    return c_hidx_p;
+failed_cleanup:
+    delete c_hidx_p;
+failed_ret:
+    return nullptr;
+}
+
+extern "C" void
+destroy_kvsymdb_hash_index(
+    kvsymdb_hash_index_t *c_hidx_p
+) {
+    if (!c_hidx_p) return;
+    delete c_hidx_p; // dtor automatically called
+}
+
+extern "C" int
+kvsymdb_hidx_insert(
+    kvsymdb_hash_index_t   *c_hidx_p,
+    const kvsymdb_entry_t  *ent_p,
+    int                    *out_errno_p
+) {
+    if (!out_errno_p) return KVSYMDB_FAILED;
+    if (!c_hidx_p || !ent_p) {
+        *out_errno_p = _intrnl::error_code::ERR_NULLPTR;
+        return KVSYMDB_FAILED;
+    }
+
+    int rc = c_hidx_p->_kvsymdb_hidx.insert(ent_p);
+    *out_errno_p = c_hidx_p->_kvsymdb_hidx.geterror();
+
+    return rc;
+}
+
+extern "C"
+const kvsymdb_entry_t *
+kvsymdb_hidx_lookup(
+    kvsymdb_hash_index_t       *c_hidx_p,
+    const kvsymdb_bufview_t    *key_p,
+    int                        *out_errno_p
+) {
+    if (!out_errno_p) return nullptr;
+    if (!c_hidx_p || !key_p) {
+        *out_errno_p = _intrnl::error_code::ERR_NULLPTR;
+        return nullptr;
+    }
+
+    using string_view = kvsymdb::kvsymdb::string_view;
+
+    const kvsymdb_entry_t *ent_p = 
+        c_hidx_p->_kvsymdb_hidx.get(string_view(*key_p));
+
+    *out_errno_p = c_hidx_p->_kvsymdb_hidx.geterror();
+
+    return ent_p;
+}
+
+extern "C"
+int kvsymdb_hidx_remove(
+    kvsymdb_hash_index_t   *c_hidx_p,
+    const kvsymdb_entry_t  *ent_p,
+    int                    *out_errno_p
+) {
+    if (!out_errno_p) return KVSYMDB_FAILED;
+    if (!c_hidx_p || !ent_p) {
+        *out_errno_p = _intrnl::error_code::ERR_NULLPTR;
+        return KVSYMDB_FAILED;
+    }
+
+    int rc = c_hidx_p->_kvsymdb_hidx.remove(ent_p);
+    *out_errno_p = c_hidx_p->_kvsymdb_hidx.geterror();
+
+    return rc;
+}
+
 extern "C" {
 #include <stdio.h>
 #include <zlib.h>

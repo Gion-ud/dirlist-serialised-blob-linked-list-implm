@@ -13,27 +13,6 @@
 #include <unistd.h>
 #define PROG_NAME "mksym"
 
-struct CXX_FILE {
-private:
-    FILE   *m_fp = nullptr;
-public:
-    CXX_FILE(FILE *fp) noexcept : m_fp(fp) {}
-    bool is_open() const noexcept {
-        return (!!m_fp);
-    }
-    FILE *get() noexcept {
-        return m_fp;
-    }
-    ~CXX_FILE() noexcept {
-        if (m_fp) {
-            fclose(m_fp);
-            m_fp = nullptr;
-        }
-    }
-    CXX_FILE(const CXX_FILE &) = delete;
-    CXX_FILE &operator=(const CXX_FILE &) = delete;
-};
-
 constexpr auto usage_msg = string_utils::make_string_literal(
     "USAGE: " PROG_NAME " -f <filename>\n"
 );
