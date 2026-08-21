@@ -1,5 +1,6 @@
 #all: keylist.o tskl
-all: build/kvsymdb.o bin/readsym bin/symput bin/mksym bin/symdel add_bin_path # bin/tssym bin/symdb
+all: build/kvsymdb.o add_bin_path bin/tssym
+#bin/readsym bin/symput bin/mksym bin/symdel 
 #all: bin/list add_bin_path
 
 #all: build/jwkvmap.o bin/jwkv add_bin_path

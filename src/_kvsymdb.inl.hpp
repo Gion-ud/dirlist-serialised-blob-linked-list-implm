@@ -53,8 +53,9 @@ extern "C" { // c abi structs; implmtation detail
         uint32_t    _entrycap;      // [1]
         uint32_t    _buf_len;       // [2]
         uint32_t    _buf_size;      // [3]
-        uint8_t    *_state_arr;     // [4]
-        uint8_t     _arena_buf[];   // [5]
+        int         _err_code;      // [4]
+        uint8_t    *_state_arr;     // [5]
+        uint8_t     _arena_buf[];   // [6]
     };
 }
 
@@ -67,7 +68,7 @@ constexpr uint16_t FILE_VERSION = 0x0101;
 constexpr uint32_t FILE_ALIGN   = kvsymdb::ALIGN_SIZE;
 
 namespace error_code {
-    enum _errno {
+    enum _ErrorCodeEnum {
         NOERROR,
         ERR_OPNEW,
         ERR_OPNEWARR,
@@ -316,10 +317,9 @@ inline bool is_valid_entry(
 
 inline int reserve(
     kvsymdb_t  *symdb_p,
-    uint32_t    new_entc,
-    int        *out_errno_p
+    uint32_t    new_entc
 ) {
-    assert(symdb_p && out_errno_p);
+    assert(symdb_p);
     assert(new_entc >= symdb_p->_entrycnt);
     assert(symdb_p->_state_arr);
 
@@ -327,11 +327,11 @@ inline int reserve(
         operator new[](new_entc * sizeof(uint8_t), std::nothrow)
     );
     if (!new_state_arr) {
-        *out_errno_p = error_code::ERR_OPNEWARR;
+        symdb_p->_err_code = error_code::ERR_OPNEWARR;
         dbg_log_msg("");
         dbg_print(
             "reserve failed: %s\n",
-            strerror(*out_errno_p)
+            strerror(symdb_p->_err_code)
         );
         return -1;
     }
@@ -347,15 +347,14 @@ inline int reserve(
     symdb_p->_state_arr = new_state_arr;
     symdb_p->_entrycap = new_entc;
 
-    return KVSYMDB_SUCCESS;
+    return KVSYMDB_OK;
 }
 
 inline int reserve_arenabuf(
     kvsymdb_t **symdb_pp,
-    uint32_t    new_bufsize,
-    int        *out_errno_p
+    uint32_t    new_bufsize
 ) {
-    assert(symdb_pp && *symdb_pp && out_errno_p);
+    assert(symdb_pp && *symdb_pp);
     assert((*symdb_pp)->_state_arr);
     assert(new_bufsize >= (*symdb_pp)->_buf_len);
 
@@ -364,11 +363,11 @@ inline int reserve_arenabuf(
         operator new(sizeof(kvsymdb_t) + new_bufsize, std::nothrow)
     );
     if (!new_symdb_p) {
-        *out_errno_p = error_code::ERR_OPNEW;
+        old_symdb_p->_err_code = error_code::ERR_OPNEW;
         dbg_log_msg("");
         dbg_print(
             "reserve_arenabuf failed: %s\n",
-            strerror(*out_errno_p)
+            strerror(old_symdb_p->_err_code)
         );
         goto failed_ret;
     }
@@ -388,9 +387,9 @@ inline int reserve_arenabuf(
     operator delete(old_symdb_p);
     *symdb_pp = new_symdb_p;
 
-    return KVSYMDB_SUCCESS;
+    return KVSYMDB_OK;
 failed_ret:
-    return KVSYMDB_FAILED;
+    return (*symdb_pp)->_err_code;
 }
 
 

@@ -75,10 +75,10 @@ int main(int argc, char *argv[]) {
     const char *new_filename = tmp_filename_buf.data();
 
 {
-    kvsymdb::file_reader dbif(opt_f_filename);
+    kvsymdb::file_mapper dbif(opt_f_filename);
     if (!dbif.is_init()) {
         std::cerr
-            << "kvsymdb::file_reader(): "
+            << "kvsymdb::file_mapper(): "
             << dbif.errmsg() << std::endl;
         return -1;
     }

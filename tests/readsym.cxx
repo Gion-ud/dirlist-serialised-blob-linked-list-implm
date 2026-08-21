@@ -129,11 +129,11 @@ int main(int argc, char *argv[]) {
     }
 
     using namespace cxx_kvsymdb;
-    kvsymdb::file_reader dbf(opt_file.opt_arg);
+    kvsymdb::file_mapper dbf(opt_file.opt_arg);
 
     if (!dbf.is_init()) {
         std::cerr
-            << "kvsymdb::file_reader() failed:"
+            << "kvsymdb::file_mapper() failed:"
             << dbf.errmsg() << std::endl;
 
         return -1;
