@@ -4,64 +4,47 @@ using namespace cxx_kvsymdb;
 using ErrorCode = _intrnl::error_code::_ErrorCodeEnum;
 extern "C" const int KVSYMDB_OK = ErrorCode::NOERROR;
 
+
+
+
 extern "C" kvsymdb_t *
-create_kvsymdb(uint32_t entc, uint32_t bufsize, int *out_errno_p) {
+create_kvsymdb(uint32_t entc, uint32_t arena_size, int *out_errno_p) {
     if (!out_errno_p) return nullptr;
     *out_errno_p = ErrorCode::NOERROR;
 
-    if (entc < kvsymdb::INIT_ENTC)
-        entc = kvsymdb::INIT_ENTC;
+    if (entc < kvsymdb::INIT_ENTC) entc = kvsymdb::INIT_ENTC;
+    if (arena_size < kvsymdb::INIT_BUFSIZE)
+        arena_size = kvsymdb::INIT_BUFSIZE;
 
-    if (bufsize < kvsymdb::INIT_BUFSIZE)
-        bufsize = kvsymdb::INIT_BUFSIZE;
+    arena_size = _intrnl::align_u32(arena_size);
 
-    kvsymdb_t *_symdb_p = static_cast<kvsymdb_t*>(
-        operator new(sizeof(kvsymdb_t) + bufsize, std::nothrow)
-    );
+    size_t _db_buf_size = _intrnl::ckvsymdb::calc_buf_size(entc, arena_size);
+    void *_db_buf = ::operator new(_db_buf_size, std::nothrow);
 
-    if (!_symdb_p) {
+    if (!_db_buf) {
         *out_errno_p = ErrorCode::ERR_OPNEW;
         dbg_log_msg("");
-        dbg_print(
-            "create_kvsymdb failed: %s",
-            _intrnl::strerror(*out_errno_p)
-        );
-        goto failed_ret;
+        dbg_print("create_kvsymdb failed: %s", _intrnl::strerror(*out_errno_p));
+        ::operator delete(_db_buf);
+        return nullptr;
     }
-    memset(_symdb_p, 0, sizeof(kvsymdb_t) + bufsize);
+    memset(_db_buf, 0, _db_buf_size);
 
-    _symdb_p->_entrycnt = 0u;
-    _symdb_p->_entrycap = entc;
-    _symdb_p->_buf_len  = 0u;
-    _symdb_p->_buf_size = bufsize;
+    kvsymdb_t *c_dbp = static_cast<kvsymdb_t*>(_db_buf);
 
-    _symdb_p->_state_arr = static_cast<uint8_t*>(
-        operator new[](entc * sizeof(uint8_t), std::nothrow)
-    );
+    c_dbp->_entrycnt     = 0u;
+    c_dbp->_entrycap     = entc;
+    c_dbp->_buf_len      = 0u;
+    c_dbp->_buf_size     = arena_size;
+    c_dbp->_err_code     = ErrorCode::NOERROR;
+    c_dbp->_state_arr    =
+        static_cast<uint8_t*>(_db_buf) + sizeof(kvsymdb_t) + arena_size;
 
-    if (!_symdb_p->_state_arr) {
-        *out_errno_p = ErrorCode::ERR_OPNEWARR;
-        dbg_log_msg("");
-        dbg_print(
-            "create_kvsymdb failed: %s",
-            _intrnl::strerror(*out_errno_p)
-        );
-        goto failed;
-    }
-    memset(_symdb_p->_state_arr, 0, entc * sizeof(uint8_t));
-
-    return _symdb_p;
-failed:
-    destroy_kvsymdb(_symdb_p);
-failed_ret:
-    return nullptr;
+    return c_dbp;
 }
 
 extern "C" void destroy_kvsymdb(kvsymdb_t *symdb_p) {
-    if (!symdb_p) return;
-    if (symdb_p->_state_arr)
-        operator delete[](symdb_p->_state_arr);
-    operator delete(symdb_p);
+    if (symdb_p) ::operator delete(symdb_p);
 }
 
 extern "C" int kvsymdb_get_intrnl_state(
@@ -81,21 +64,26 @@ extern "C" int kvsymdb_get_intrnl_state(
     return KVSYMDB_OK;
 }
 
+extern "C" uint32_t kvsymdb_entcnt(const kvsymdb_t *symdb_p) {
+    return (!symdb_p) ? 0u : symdb_p->_entrycnt;
+}
+
+
 extern "C" int kvsymdb_reserve(
-    kvsymdb_t  *symdb_p,
+    kvsymdb_t **symdb_pp,
     uint32_t    new_entc
 ) {
-    if (!symdb_p) return ErrorCode::ERR_NULLPTR;
-    symdb_p->_err_code = ErrorCode::NOERROR;
-    _intrnl::assert_intrnl_state(symdb_p);
+    if (!symdb_pp || !*symdb_pp) return ErrorCode::ERR_NULLPTR;
+    (*symdb_pp)->_err_code = ErrorCode::NOERROR;
+    _intrnl::assert_intrnl_state(*symdb_pp);
 
     // explicit check required for already enough cap
-    if (symdb_p->_entrycap >= new_entc) return KVSYMDB_OK;
+    if ((*symdb_pp)->_entrycap >= new_entc) return KVSYMDB_OK;
 
-    int rc = _intrnl::reserve(symdb_p, new_entc);
-    if (rc < 0) {
-        symdb_p->_err_code = ErrorCode::ERR_RESIZE;
-        return symdb_p->_err_code;
+    int rc = _intrnl::reserve(symdb_pp, new_entc);
+    if (rc != KVSYMDB_OK) {
+        (*symdb_pp)->_err_code = ErrorCode::ERR_RESIZE;
+        return (*symdb_pp)->_err_code;
     }
 
     return KVSYMDB_OK;
@@ -115,7 +103,7 @@ extern "C" int kvsymdb_reserve_arenabuf(
     if ((*symdb_pp)->_buf_size >= new_bufsize) return KVSYMDB_OK;
     int rc = _intrnl::reserve_arenabuf(symdb_pp, new_bufsize);
 
-    if (rc < 0) {
+    if (rc != KVSYMDB_OK) {
         (*symdb_pp)->_err_code = ErrorCode::ERR_RESIZEBUF;
         return (*symdb_pp)->_err_code;
     }
@@ -232,8 +220,10 @@ extern "C" int kvsymdb_insert(
 
     assert(is_aligned);
     if (symdb_p->_buf_len + entsize > symdb_p->_buf_size) {
-        uint32_t new_bufsize = (entsize > symdb_p->_buf_size)
-            ? entsize : symdb_p->_buf_size * 2;
+        uint32_t new_bufsize = _intrnl::align_u32(
+            (entsize > symdb_p->_buf_size)
+                ? entsize : symdb_p->_buf_size * 2
+        );
 
         dbg_print(
             "symdb_p->_buf_size: %u; new_bufsize: %u",
@@ -403,20 +393,65 @@ kvsymdb_iter_next(
 
 // init
 
-extern "C"
-int kvsymdb_reader_bind(
-    kvsymdb_reader_t           *reader_p,
-    const kvsymdb_bufview_t    *arena_view_p,
-    uint32_t                    entry_count
-) {
-    if (!reader_p || !arena_view_p || !arena_view_p->buf_data)
-        return ErrorCode::ERR_NULLPTR;
 
-    reader_p->_arena_view.buf_data  = arena_view_p->buf_data;
-    reader_p->_arena_view.buf_size  = arena_view_p->buf_size;
-    reader_p->_entc     = entry_count; 
+inline void _kvsymdb_reader_bind(
+    kvsymdb_reader_t   *reader_p,
+    const void         *arena_buf,
+    uint32_t            arena_len,
+    uint32_t            entcnt
+) {
+
+    reader_p->_arena_view.buf_data  = arena_buf;
+    reader_p->_arena_view.buf_size  = arena_len;
+    reader_p->_entc     = entcnt; 
     reader_p->_pos      = 0u;
     reader_p->_err_code = ErrorCode::NOERROR;
+}
+
+extern "C"
+int kvsymdb_reader_bind(
+    kvsymdb_reader_t   *reader_p,
+    const void         *arena_buf,
+    uint32_t            arena_len,
+    uint32_t            entcnt
+) {
+    if (!reader_p || !arena_buf) return ErrorCode::ERR_NULLPTR;
+
+    _kvsymdb_reader_bind(reader_p, arena_buf, arena_len, entcnt);
+
+    return KVSYMDB_OK;
+}
+
+extern "C"
+int kvsymdb_reader_bind_db(
+    kvsymdb_reader_t   *reader_p,
+    const kvsymdb_t    *dbp
+) {
+    if (!reader_p || !dbp) return ErrorCode::ERR_NULLPTR;
+
+    _kvsymdb_reader_bind(
+        reader_p,
+        dbp->_arena_buf,
+        dbp->_buf_len,
+        dbp->_entrycnt
+    );
+
+    return KVSYMDB_OK;
+}
+
+extern "C"
+int kvsymdb_reader_bind_fhdr(
+    kvsymdb_reader_t               *reader_p,
+    const kvsymdb_file_header_t    *fhdr_p  
+) {
+    if (!reader_p || !fhdr_p) return ErrorCode::ERR_NULLPTR;
+
+    _kvsymdb_reader_bind(
+        reader_p,
+        fhdr_p->fh_data,
+        fhdr_p->fh_buflen,
+        fhdr_p->fh_entcnt
+    );
 
     return KVSYMDB_OK;
 }
@@ -506,13 +541,15 @@ extern "C" const char *kvsymdb_strerror(int err_code) {
 extern "C" int kvsymdb_geterror(const kvsymdb_t *symdb_p) {
     return (symdb_p) ? symdb_p->_err_code : -1;
 }
-extern "C" const char *kvsymdb_errmsg(const kvsymdb_t *symdb_p) {
-    return (symdb_p) ? _intrnl::strerror(symdb_p->_err_code) : "";
-}
 extern "C" void kvsymdb_clearerr(kvsymdb_t *symdb_p) {
     if (symdb_p) symdb_p->_err_code = KVSYMDB_OK;
 }
-
+extern "C" int kvsymdb_reader_geterror(const kvsymdb_reader_t *rdr_p) {
+    return (rdr_p) ? rdr_p->_err_code : -1;
+}
+extern "C" void kvsymdb_reader_clearerr(kvsymdb_reader_t *rdr_p) {
+    rdr_p->_err_code = 0;
+}
 
 extern "C" {
 #include <stdio.h>
@@ -795,4 +832,14 @@ void kvsymdb_file_mapper_cleanup(
     mapper_p->_fileno   = INVALID_FILENO;
     mapper_p->_base     = nullptr;
     mapper_p->_size     = 0UL;
+}
+
+extern "C"
+const kvsymdb_file_header_t *
+kvsymdb_file_mapper_get_file_header(
+    const kvsymdb_file_mapper_t  *mapper_p
+) {
+    if (!mapper_p) return nullptr;
+
+    return static_cast<const kvsymdb_file_header_t*>(mapper_p->_base);
 }

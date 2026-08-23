@@ -108,7 +108,7 @@ namespace error_code {
     };
 }; // namespace error_code
 
-inline const char *strerror(int db_errno) {
+inline const char *strerror(int db_errno) noexcept {
     using namespace error_code;
 
     switch (db_errno) {
@@ -223,13 +223,16 @@ namespace align {
     }
 } // namespace align
 
-inline void assert_intrnl_state(const kvsymdb_t *symdb_p) {
+inline void assert_intrnl_state(const kvsymdb_t *symdb_p) noexcept {
     assert(symdb_p->_buf_size >= kvsymdb::INIT_BUFSIZE);
     assert(symdb_p->_entrycap >= kvsymdb::INIT_ENTC);
     assert(symdb_p->_buf_len <= symdb_p->_buf_size);
     bool is_aligned_buf_len = align_utils::
         is_aligned_off<uint32_t, kvsymdb::ALIGN_SIZE>(symdb_p->_buf_len);
     assert(is_aligned_buf_len);
+    bool is_aligned_buf_size = align_utils::
+        is_aligned_off<uint32_t, kvsymdb::ALIGN_SIZE>(symdb_p->_buf_size);
+    assert(is_aligned_buf_size);
     assert(symdb_p->_entrycnt <= symdb_p->_entrycap);
     assert(symdb_p->_state_arr);
 }
@@ -237,7 +240,7 @@ inline void assert_intrnl_state(const kvsymdb_t *symdb_p) {
 inline bool is_valid_entoff(
     const kvsymdb_t    *symdb_p,
     uint32_t            off
-) {
+) noexcept {
     assert(symdb_p);
     if (off + sizeof(kvsymdb_record_header_t) > symdb_p->_buf_len)
         return false;
@@ -252,7 +255,7 @@ inline bool is_valid_entoff(
     );
 }
 
-inline uint32_t record_size(const kvsymdb_entry_t *ent_p) {
+inline uint32_t record_size(const kvsymdb_entry_t *ent_p) noexcept {
     return
         sizeof(*ent_p) +
         align::cstr_size_aligned<kvsymdb::ALIGN_SIZE>(ent_p->name_len) +
@@ -264,7 +267,7 @@ inline bool _is_valid_entry(
     uint32_t                arena_buf_len, 
     uint32_t                entc,
     const kvsymdb_entry_t  *ent_p
-) {
+) noexcept {
     using namespace align_utils;
 
     assert(arena_buf && ent_p);
@@ -274,6 +277,15 @@ inline bool _is_valid_entry(
     auto record_end     = reinterpret_cast<const uint8_t*>(ent_p) + record_len;
     auto arena_begin    = static_cast<const uint8_t*>(arena_buf);
     auto arena_end      = static_cast<const uint8_t*>(arena_buf) + arena_buf_len;
+
+    assert(ent_p);
+    assert(record_begin >= arena_begin);
+    assert(record_end <= arena_end);
+    bool b = is_aligned_off<uint32_t, kvsymdb::ALIGN_SIZE>(record_begin - arena_begin);
+    assert(b);
+    assert(ent_p->id < entc);
+    assert(record_len == ent_p->record_len);
+
 
     return (
         ent_p &&
@@ -288,7 +300,7 @@ inline bool _is_valid_entry(
 inline bool is_valid_entry(
     const kvsymdb_t        *symdb_p,
     const kvsymdb_entry_t  *ent_p
-) {
+) noexcept {
     assert(symdb_p && ent_p);
     
     return _is_valid_entry(
@@ -303,9 +315,8 @@ inline bool is_valid_entry(
     const kvsymdb_bufview_t    *arena_view_p,
     uint32_t                    entc,
     const kvsymdb_entry_t      *ent_p
-) {
+) noexcept {
     assert(arena_view_p && ent_p);
-
     return _is_valid_entry(
         arena_view_p->buf_data,
         arena_view_p->buf_size,
@@ -314,82 +325,149 @@ inline bool is_valid_entry(
     );
 }
 
+static auto align_u32 = [](uint32_t size) -> uint32_t {
+    return align_utils::align_off<uint32_t, kvsymdb::ALIGN_SIZE>(size);
+};
+
+
+namespace ckvsymdb {
+    static auto calc_buf_size = [](uint32_t entc, uint32_t arena_size) -> uint32_t {
+        return
+            sizeof(kvsymdb_t)                       // header
+            + align_u32(arena_size)                 // arena size
+            + align_u32(entc * sizeof(uint8_t));    // state arr
+    };
+    void *alloc_cdb_mem(
+        uint32_t    max_entc,
+        uint32_t    max_arena_size,
+        kvsymdb_t **out_cdb_pp,
+        uint8_t   **out_state_arr_p
+    ) noexcept {
+        size_t _db_buf_size = calc_buf_size(max_entc, max_arena_size);
+        void *_db_buf = ::operator new(_db_buf_size, std::nothrow);
+
+        if (!_db_buf) return nullptr;
+        memset(_db_buf, 0, _db_buf_size);
+
+        if (out_cdb_pp)
+            *out_cdb_pp = static_cast<kvsymdb_t*>(_db_buf);
+
+        if (out_state_arr_p)
+            *out_state_arr_p =
+                static_cast<uint8_t*>(_db_buf) +
+                sizeof(kvsymdb_t) +
+                _intrnl::align_u32(max_arena_size);
+
+        return _db_buf;
+    }
+}
+
+
 
 inline int reserve(
-    kvsymdb_t  *symdb_p,
+    kvsymdb_t **cdb_pp,
     uint32_t    new_entc
 ) {
-    assert(symdb_p);
-    assert(new_entc >= symdb_p->_entrycnt);
-    assert(symdb_p->_state_arr);
+    assert(cdb_pp);
+    assert(new_entc >= (*cdb_pp)->_entrycnt);
 
-    uint8_t *new_state_arr = static_cast<uint8_t*>(
-        operator new[](new_entc * sizeof(uint8_t), std::nothrow)
+    kvsymdb_t *old_cdbp = *cdb_pp;
+    kvsymdb_t *new_cdbp = nullptr;
+    uint8_t *new_state_arr = nullptr;    
+
+    void *new_cdb_buf = ckvsymdb::alloc_cdb_mem(
+        new_entc,
+        old_cdbp->_buf_size,
+        &new_cdbp,
+        &new_state_arr
     );
-    if (!new_state_arr) {
-        symdb_p->_err_code = error_code::ERR_OPNEWARR;
+
+    if (!new_cdb_buf) {
+        old_cdbp->_err_code = error_code::ERR_OPNEW;
         dbg_log_msg("");
         dbg_print(
-            "reserve failed: %s\n",
-            strerror(symdb_p->_err_code)
+            "cxx_kvsymdb::_intrnl::reserve failed: %s",
+            _intrnl::strerror(old_cdbp->_err_code)
         );
-        return -1;
+        return old_cdbp->_err_code;
     }
 
-    memset(new_state_arr, 0, new_entc * sizeof(uint8_t));
+    new_cdbp->_entrycnt     = old_cdbp->_entrycnt;
+    new_cdbp->_entrycap     = new_entc;
+    new_cdbp->_buf_len      = old_cdbp->_buf_len;
+    new_cdbp->_buf_size     = old_cdbp->_buf_size;
+    new_cdbp->_err_code     = old_cdbp->_err_code;
+    new_cdbp->_state_arr    = new_state_arr;
+
     memcpy(
-        new_state_arr,
-        symdb_p->_state_arr,
-        symdb_p->_entrycnt * sizeof(uint8_t)
+        new_cdbp->_state_arr,
+        old_cdbp->_state_arr,
+        old_cdbp->_entrycnt * sizeof(uint8_t)
+    );
+    memcpy(
+        new_cdbp->_arena_buf,
+        old_cdbp->_arena_buf,
+        old_cdbp->_buf_len
     );
 
-    operator delete[](symdb_p->_state_arr);
-    symdb_p->_state_arr = new_state_arr;
-    symdb_p->_entrycap = new_entc;
+    operator delete[](old_cdbp);
+    *cdb_pp = new_cdbp;
 
     return KVSYMDB_OK;
 }
 
 inline int reserve_arenabuf(
-    kvsymdb_t **symdb_pp,
-    uint32_t    new_bufsize
+    kvsymdb_t **cdb_pp,
+    uint32_t    new_arena_size
 ) {
-    assert(symdb_pp && *symdb_pp);
-    assert((*symdb_pp)->_state_arr);
-    assert(new_bufsize >= (*symdb_pp)->_buf_len);
+    assert(cdb_pp && *cdb_pp);
+    assert((*cdb_pp)->_state_arr);
+    assert(new_arena_size >= (*cdb_pp)->_buf_len);
+    assert(new_arena_size == align_u32(new_arena_size));
 
-    kvsymdb_t *old_symdb_p = *symdb_pp;
-    kvsymdb_t *new_symdb_p = static_cast<kvsymdb_t*>(
-        operator new(sizeof(kvsymdb_t) + new_bufsize, std::nothrow)
+    kvsymdb_t *old_cdbp = *cdb_pp;
+    kvsymdb_t *new_cdbp = nullptr;
+    uint8_t *new_state_arr = nullptr;    
+
+    void *new_cdb_buf = ckvsymdb::alloc_cdb_mem(
+        old_cdbp->_entrycap,
+        new_arena_size,
+        &new_cdbp,
+        &new_state_arr
     );
-    if (!new_symdb_p) {
-        old_symdb_p->_err_code = error_code::ERR_OPNEW;
+
+    if (!new_cdb_buf) {
+        old_cdbp->_err_code = error_code::ERR_OPNEW;
         dbg_log_msg("");
         dbg_print(
-            "reserve_arenabuf failed: %s\n",
-            strerror(old_symdb_p->_err_code)
+            "cxx_kvsymdb::_intrnl::reserve_arenabuf failed: %s\n",
+            strerror(old_cdbp->_err_code)
         );
-        goto failed_ret;
+        return old_cdbp->_err_code;
     }
-    memset(new_symdb_p, 0, sizeof(kvsymdb_t) + new_bufsize);
 
-    new_symdb_p->_entrycnt  = old_symdb_p->_entrycnt;
-    new_symdb_p->_entrycap  = old_symdb_p->_entrycap;
-    new_symdb_p->_buf_len   = old_symdb_p->_buf_len;
-    new_symdb_p->_buf_size  = new_bufsize;
-    new_symdb_p->_state_arr = old_symdb_p->_state_arr; // ptr swap
+    new_cdbp->_entrycnt     = old_cdbp->_entrycnt;
+    new_cdbp->_entrycap     = old_cdbp->_entrycap;
+    new_cdbp->_buf_len      = old_cdbp->_buf_len;
+    new_cdbp->_buf_size     = new_arena_size;
+    new_cdbp->_err_code     = old_cdbp->_err_code;
+    new_cdbp->_state_arr    = new_state_arr;
 
     memcpy(
-        new_symdb_p->_arena_buf,
-        old_symdb_p->_arena_buf,
-        old_symdb_p->_buf_len
+        new_cdbp->_state_arr,
+        old_cdbp->_state_arr,
+        old_cdbp->_entrycnt * sizeof(uint8_t)
     );
-    operator delete(old_symdb_p);
-    *symdb_pp = new_symdb_p;
+    memcpy(
+        new_cdbp->_arena_buf,
+        old_cdbp->_arena_buf,
+        old_cdbp->_buf_len
+    );
+
+    operator delete(old_cdbp);
+    *cdb_pp = new_cdbp;
 
     return KVSYMDB_OK;
-failed_ret:
-    return (*symdb_pp)->_err_code;
 }
 
 

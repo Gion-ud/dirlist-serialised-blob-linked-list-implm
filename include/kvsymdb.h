@@ -20,6 +20,24 @@ typedef struct _c_kvsymdb_state {
     const uint8_t  *arena_buf;      // [6]
 } kvsymdb_state_t;
 
+typedef struct _c_kvsymdb_record_header_v1 {
+    uint32_t    id;         // [0]; entry idx
+    uint32_t    hash;       // [1]
+    uint16_t    type;       // [2]
+    uint16_t    name_len;   // [3]; must be 0 terminated cstr
+    uint32_t    data_len;   // [4]
+    uint32_t    record_len; // [5]
+    uint8_t     payload[];  // [6]; [name]['\0'][data]
+} kvsymdb_record_header_v1_t;
+
+typedef struct _c_kvsymdb_record_header_v2 {
+    uint32_t    id;         // [0]; entry idx
+    uint32_t    hash;       // [1]
+    uint16_t    name_len;   // [2]; must be 0 terminated cstr
+    uint16_t    data_len;   // [3]
+    uint8_t     payload[];  // [5]; [name]['\0'][data]
+} kvsymdb_record_header_v2_t;
+
 typedef struct _c_kvsymdb_record_header {
     uint32_t    id;         // [0]; entry idx
     uint32_t    hash;       // [1]
@@ -69,7 +87,7 @@ extern int kvsymdb_get_intrnl_state(
     kvsymdb_state_t    *out_view_p
 );
 extern int kvsymdb_reserve(
-    kvsymdb_t  *symdb_p,
+    kvsymdb_t **symdb_pp,
     uint32_t    new_entc
 );
 extern int kvsymdb_reserve_arenabuf(
@@ -123,15 +141,32 @@ extern kvsymdb_iter_t kvsymdb_iter_next(
 
 extern const char *kvsymdb_strerror(int err);
 extern int kvsymdb_geterror(const kvsymdb_t *symdb_p);
-extern const char *kvsymdb_errmsg(const kvsymdb_t *symdb_p);
 extern void kvsymdb_clearerr(kvsymdb_t *symdb_p);
 
-// New APIs since 13/07/2026
+static inline const char *kvsymdb_errmsg(const kvsymdb_t *symdb_p) {
+    return kvsymdb_strerror(kvsymdb_geterror(symdb_p));
+}
+extern int kvsymdb_reader_geterror(const kvsymdb_reader_t *rdr_p);
+extern void kvsymdb_reader_clearerr(kvsymdb_reader_t *rdr_p);
+
+static inline const char *
+kvsymdb_reader_errmsg(const kvsymdb_reader_t *rdr_p) {
+    return kvsymdb_strerror(kvsymdb_reader_geterror(rdr_p));
+}
+
+extern uint32_t kvsymdb_entcnt(const kvsymdb_t *symdb_p);
+
 extern int kvsymdb_reader_bind(
-    kvsymdb_reader_t           *reader_p,
-    const kvsymdb_bufview_t    *arena_view_p,
-    uint32_t                    entry_count
+    kvsymdb_reader_t   *reader_p,
+    const void         *arena_buf,
+    uint32_t            arena_len,
+    uint32_t            entcnt
 );
+extern int kvsymdb_reader_bind_db(
+    kvsymdb_reader_t   *reader_p,
+    const kvsymdb_t    *dbp
+);
+
 extern const kvsymdb_entry_t *
     kvsymdb_reader_read(kvsymdb_reader_t *reader_p);
 
@@ -153,20 +188,26 @@ typedef struct _c_kvsymdb_file_header {
     uint8_t     fh_data[];  // [6]
 } kvsymdb_file_header_t;
 
-
-#include <stdio.h>
 typedef struct _c_kvsymdb_file_mapper {
     int         _fileno;
     void       *_base;
     size_t      _size;
 } kvsymdb_file_mapper_t;
 
+extern int kvsymdb_reader_bind_fhdr(
+    kvsymdb_reader_t               *reader_p,
+    const kvsymdb_file_header_t    *fhdr_p  
+);
+
 extern int kvsymdb_file_mapper_init(
     kvsymdb_file_mapper_t  *mapper_p,
     const char             *filename
 );
 extern void kvsymdb_file_mapper_cleanup(kvsymdb_file_mapper_t *mapper_p);
-
+extern const kvsymdb_file_header_t *
+kvsymdb_file_mapper_get_file_header(
+    const kvsymdb_file_mapper_t  *mapper_p
+);
 
 extern const int KVSYMDB_OK;
 

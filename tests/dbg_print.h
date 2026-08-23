@@ -9,7 +9,7 @@
     } while(0)
 
 #define dbg_log_msg(msg) \
-    do {\
+    do { \
         fprintf(stderr, "<%s@file '%s' line%d> %s\n", __func__, __FILE__, __LINE__, msg);\
     } while(0)
 

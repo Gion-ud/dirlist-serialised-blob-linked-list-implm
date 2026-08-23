@@ -1,5 +1,5 @@
 #all: keylist.o tskl
-all: build/kvsymdb.o add_bin_path bin/tssym
+all: build/kvsymdb.o add_bin_path bin/tssym bin/tscsym
 #bin/readsym bin/symput bin/mksym bin/symdel 
 #all: bin/list add_bin_path
 
@@ -54,7 +54,7 @@ bin/symdel: build/kvsymdb.o tests/symdel.cxx | bin
 bin/tssym: build/kvsymdb.o tests/tssym.cxx | bin
 	cc $^ -o $@ $(CXXFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman
 
-bin/symdb: build/kvsymdb.o tests/symdb.c | bin
+bin/tscsym: build/kvsymdb.o tests/tscsym.c | bin
 	cc $^ -o $@ $(CFLAGS) -Iinclude -Isrc -Llib -lstdc++ -lgcc -lgcc_s -lz -lmman
 
 bin/list: src/linked_list.cxx | bin

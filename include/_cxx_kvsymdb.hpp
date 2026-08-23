@@ -134,7 +134,7 @@ public:
     }
 
     int reserve(uint32_t entc) noexcept {
-        return kvsymdb_reserve(this->m_symdb_p, entc);
+        return kvsymdb_reserve(&this->m_symdb_p, entc);
     }
     int reserve_buffer(uint32_t new_bufsize) noexcept {
         return kvsymdb_reserve_arenabuf(&this->m_symdb_p, new_bufsize);
@@ -397,9 +397,11 @@ public:
     ) noexcept :
         kvsymdb_reader_t{}, m_errno(0)
     {
+        auto *avp = &arena_view_ref._base();
         int rc = ::kvsymdb_reader_bind(
             this,
-            &arena_view_ref._base(),
+            avp->buf_data,
+            avp->buf_size,
             entry_count
         );
         if (rc) {

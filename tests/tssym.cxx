@@ -3,23 +3,18 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <utility>
 #include "dbg_print.h"
 
 #include "array_utils.hpp"
-#include "string_utils.hpp"
 #include "kvsymdb_print.hpp"
 
 constexpr uint32_t ENT_TYPE = 0xE10F;
 
 
-#include <vector>
+using kv_pair_t = std::pair<const char *, const char *>;
 
-struct cstr_kv {
-    const char *name;
-    const char *data;
-};
-
-static constexpr cstr_kv _rec_arr[] = {
+static constexpr kv_pair_t _rec_arr[] = {
     {"open", "libc fcntl.h: open"},
     {"close", "libc unistd.h: close"},
     {"read", "libc unistd.h: read"},
@@ -52,14 +47,14 @@ using namespace array_utils;
 template<size_t Nkv>
 inline bool insert_from_kv_arr(
     kvsymdb         &db_ref,
-    const cstr_kv   (&c_kv_arr_ref)[Nkv]
+    const kv_pair_t (&c_kv_arr_ref)[Nkv]
 ) noexcept {
     const auto kv_arr_view = c_array::make_array_view(c_kv_arr_ref);
 
     for (const auto &kv_ref : kv_arr_view) {
         int rc = db_ref.insert(
-            kv_ref.name,
-            kvsymdb::string_view(kv_ref.data),
+            kvsymdb::string_view(kv_ref.first),
+            kvsymdb::string_view(kv_ref.second),
             ENT_TYPE
         );
         if (rc != KVSYMDB_OK) {
@@ -119,7 +114,6 @@ int main() {
     setvbuf(stderr, nullptr, _IOFBF, STDIO_BUFSIZE);
 
     using kvsymdb_print::operator<<;
-    using namespace string_utils;
     using namespace array_utils;
     using namespace tssym;
 
@@ -179,6 +173,8 @@ int main() {
 
     dbg_log_msg("# reload 1");
     decltype(db_rdr.read()) ent_p = nullptr;
+    assert(db_rdr.read());
+    db_rdr.rewind();
     while ((ent_p = db_rdr.read()) != nullptr) {
         kvsymdb::entry_view ev{};
         int rc = db_mpr.get_entry_view(ent_p, &ev);
